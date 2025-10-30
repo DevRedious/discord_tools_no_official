@@ -8,15 +8,15 @@ const translations = {
         'editor-title': 'Éditeur de Messages',
         'how-to-use': 'Comment utiliser :',
         'how-to-content': '<ul><li>Tapez votre message dans l\'éditeur</li><li>Sélectionnez la partie à styliser</li><li>Cliquez sur un style pour l\'appliquer</li><li>Les codes Discord sont automatiquement protégés</li></ul>',
-        'markdown-title': '📝 Styles Markdown Discord',
+        'markdown-title': 'Styles Markdown Discord',
         'basic-formatting': 'Basique',
         'headings': 'Titres',
         'special': 'Spéciaux',
-        'unicode-fonts': '🎭 Polices Unicode',
+        'unicode-fonts': 'Polices Unicode',
         'unicode-warning': '⚠️ Les polices Unicode ne se combinent pas avec le markdown Discord.',
-        'your-message': '✍️ Zone de Texte',
+        'your-message': 'Zone de Texte',
         'editor-placeholder': 'Tapez votre message ici...\n\nExemples :\n- Channel : <#123456789>\n- Rôle : <@&123456789>\n- Utilisateur : <@123456789>',
-        'preview-title': '👁️ Aperçu Discord',
+        'preview-title': 'Aperçu Discord',
         'preview-placeholder': 'Votre aperçu apparaîtra ici...',
         'copy-btn': 'Copier le message',
         'reset-btn': 'Réinitialiser',
@@ -39,15 +39,15 @@ const translations = {
         'editor-title': 'Message Editor',
         'how-to-use': 'How to use:',
         'how-to-content': '<ul><li>Type your message in the editor</li><li>Select the part to style</li><li>Click a style button to apply it</li><li>Discord codes are automatically protected</li></ul>',
-        'markdown-title': '📝 Discord Markdown Styles',
+        'markdown-title': 'Discord Markdown Styles',
         'basic-formatting': 'Basic',
         'headings': 'Headings',
         'special': 'Special',
-        'unicode-fonts': '🎭 Unicode Fonts',
+        'unicode-fonts': 'Unicode Fonts',
         'unicode-warning': '⚠️ Unicode fonts do not combine with Discord markdown.',
-        'your-message': '✍️ Text Area',
+        'your-message': 'Text Area',
         'editor-placeholder': 'Type your message here...\n\nExamples:\n- Channel: <#123456789>\n- Role: <@&123456789>\n- User: <@123456789>',
-        'preview-title': '👁️ Discord Preview',
+        'preview-title': 'Discord Preview',
         'preview-placeholder': 'Your preview will appear here...',
         'copy-btn': 'Copy message',
         'reset-btn': 'Reset',
@@ -161,13 +161,13 @@ function toggleTheme() {
     const body = document.body;
     body.classList.toggle('light');
     currentTheme = body.classList.contains('light') ? 'light' : 'dark';
-    document.getElementById('themeBtn').textContent = currentTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+    document.getElementById('themeBtn').textContent = currentTheme === 'light' ? '☀️ ' : '🌙 ';
 }
 
 function toggleLanguage() {
     currentLang = currentLang === 'fr' ? 'en' : 'fr';
     document.documentElement.lang = currentLang;
-    document.getElementById('langBtn').textContent = currentLang === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN';
+    document.getElementById('langBtn').textContent = currentLang === 'fr' ? 'FR' : 'EN';
     updateTranslations();
     initMarkdownButtons();
     const query = document.getElementById('emojiSearch').value.trim();
