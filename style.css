@@ -112,7 +112,6 @@ header p {
     padding: 30px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
-    max-height: calc(100vh - 180px);
 }
 
 .column-title {
@@ -188,6 +187,9 @@ header p {
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .emoji-item:hover {
@@ -209,6 +211,17 @@ header p {
     margin-bottom: 20px;
     font-size: 0.9em;
     line-height: 1.6;
+}
+
+.info-box ul {
+    margin-top: 10px;
+    margin-left: 18px;
+    list-style: disc;
+    color: var(--text-secondary);
+}
+
+.info-box li + li {
+    margin-top: 4px;
 }
 
 .section-header {
@@ -348,8 +361,8 @@ footer a:hover {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    background: var(--success);
-    color: var(--bg-primary);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
     padding: 15px 25px;
     border-radius: 10px;
     font-weight: 600;
@@ -363,6 +376,72 @@ footer a:hover {
 .notification.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+.notification.success {
+    background: var(--success);
+    color: var(--bg-primary);
+}
+
+.notification.warning {
+    background: var(--warning);
+    color: var(--bg-primary);
+}
+
+.notification.error {
+    background: var(--error);
+    color: #fff;
+}
+
+.info-note {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+}
+
+.preview-box pre {
+    background: var(--bg-hover);
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+.preview-box blockquote {
+    border-left: 4px solid var(--accent);
+    margin: 10px 0;
+    padding-left: 12px;
+    color: var(--text-secondary);
+}
+
+.preview-box .spoiler {
+    background: var(--text-secondary);
+    color: transparent;
+    border-radius: 4px;
+    padding: 0 4px;
+}
+
+.preview-box .spoiler.revealed {
+    color: inherit;
+}
+
+.preview-box .list-item {
+    margin-left: 18px;
+    color: var(--text-secondary);
+}
+
+@media (min-width: 1201px) {
+    .column {
+        max-height: calc(100vh - 180px);
+    }
 }
 
 /* RESPONSIVE */
