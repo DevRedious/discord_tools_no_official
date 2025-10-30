@@ -9,7 +9,7 @@
 <body>
     <header>
         <h1>🎨 Markify</h1>
-        <p>Éditeur de messages et émojis pour Discord</p>
+        <p id="subtitle">Éditeur de messages et émojis pour Discord</p>
         <div class="controls">
             <button class="control-btn" id="langBtn" onclick="toggleLanguage()">🇫🇷 FR</button>
             <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙 Dark</button>
@@ -20,60 +20,74 @@
         <!-- EMOJI COLUMN -->
         <div class="column">
             <h2 class="column-title">😀 <span id="emojiTitle">Sélecteur d'Émojis</span></h2>
-            
-            <input type="text" id="emojiSearch" class="search-box" placeholder="Rechercher un emoji..." oninput="searchEmojis()">
-            
+
+            <input type="text" id="emojiSearch" class="search-box" placeholder="Rechercher un emoji...">
+
             <div class="tabs" id="emojiTabs"></div>
-            
+
             <div id="flagInfo" class="info-box" style="display:none;">
-                💡 <strong>Astuce drapeaux :</strong> Vous pouvez combiner deux émojis de lettres régionales pour créer des drapeaux de pays ! 
+                💡 <strong>Astuce drapeaux :</strong> Vous pouvez combiner deux émojis de lettres régionales pour créer des drapeaux de pays !<br>
                 Exemple : 🇫 + 🇷 = 🇫🇷
             </div>
-            
+
             <div class="emoji-grid" id="emojiGrid"></div>
         </div>
 
         <!-- MESSAGE EDITOR COLUMN -->
         <div class="column">
             <h2 class="column-title">✏️ <span id="editorTitle">Éditeur de Messages</span></h2>
-            
+
             <div class="info-box">
                 💡 <strong id="editorInfoTitle">Comment utiliser :</strong>
                 <div id="editorInfoText">
-                    Tapez votre texte ci-dessous, sélectionnez une partie et cliquez sur un bouton de style pour l'appliquer.
-                    Utilisez le panneau d'émojis à gauche pour ajouter des émojis à votre message !
+                    <ul>
+                        <li>Tapez votre message dans l'éditeur</li>
+                        <li>Sélectionnez la partie à styliser</li>
+                        <li>Cliquez sur un style pour l'appliquer</li>
+                        <li>Les codes Discord sont automatiquement protégés</li>
+                    </ul>
                 </div>
             </div>
 
             <!-- MARKDOWN SECTION -->
             <div class="section-header" id="markdownTitle">📝 Styles Markdown Discord</div>
-            
+
             <div class="style-group-header" id="basicMarkdownTitle">Basique</div>
             <div class="style-grid" id="basicMarkdown"></div>
-            
+
             <div class="style-group-header" id="headingMarkdownTitle">Titres</div>
             <div class="style-grid" id="headingMarkdown"></div>
-            
+
             <div class="style-group-header" id="specialMarkdownTitle">Spéciaux</div>
             <div class="style-grid" id="specialMarkdown"></div>
 
             <!-- FONTS SECTION -->
             <div class="section-header" id="fontsTitle">🎭 Polices Unicode</div>
+            <p class="info-note" id="fontsInfo">⚠️ Les polices Unicode ne se combinent pas avec le markdown Discord.</p>
             <div class="style-grid" id="fontGrid"></div>
 
             <!-- TEXT EDITOR -->
             <div class="section-header" id="textEditorTitle">✍️ Zone de Texte</div>
             <textarea id="messageEditor" class="message-editor" placeholder="Tapez votre message ici..."></textarea>
-            
-            <button class="copy-btn" onclick="copyMessage()">
-                📋 <span id="copyBtnText">Copier le message</span>
-            </button>
+
+            <div class="button-group">
+                <button type="button" class="copy-btn" onclick="copyMessage()">
+                    📋 <span id="copyBtnText">Copier le message</span>
+                </button>
+                <button type="button" class="reset-btn" onclick="resetEditor()">
+                    ♻️ <span id="resetBtnText">Réinitialiser</span>
+                </button>
+            </div>
 
             <!-- PREVIEW -->
             <div class="section-header" id="previewTitle">👁️ Aperçu Discord</div>
             <div id="messagePreview" class="preview-box">Votre aperçu apparaîtra ici...</div>
         </div>
     </div>
+
+    <footer>
+        <p><span id="footerText">Site créé par</span> <a href="https://discord.com" target="_blank" rel="noopener">Markify</a> <span id="footerText2">pour aider les gestionnaires de serveur Discord</span></p>
+    </footer>
 
     <div id="notification" class="notification"></div>
 

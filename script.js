@@ -1,159 +1,110 @@
-// GLOBAL FUNCTIONS - Must be declared before use
-function toggleTheme() {
-    const body = document.body;
-    const btn = document.getElementById('themeBtn');
-    
-    if (body.classList.contains('light')) {
-        body.classList.remove('light');
-        btn.textContent = '🌙 Dark';
-    } else {
-        body.classList.add('light');
-        btn.textContent = '☀️ Light';
-    }
-}
-
-function toggleLanguage() {
-    const btn = document.getElementById('langBtn');
-    
-    if (currentLang === 'fr') {
-        currentLang = 'en';
-        btn.textContent = '🇬🇧 EN';
-    } else {
-        currentLang = 'fr';
-        btn.textContent = '🇫🇷 FR';
-    }
-    
-    updateTranslations();
-}
-
-function searchEmojis() {
-    const query = document.getElementById('emojiSearch').value.toLowerCase();
-    if (!query) {
-        displayEmojis(emojiData[currentCategory]);
-        return;
-    }
-    
-    const filtered = allEmojis.filter(emoji => 
-        emoji.n.some(name => name.includes(query))
-    );
-    displayEmojis(filtered);
-}
-
-function copyMessage() {
-    const text = document.getElementById('messageEditor').value;
-    if (!text) {
-        showNotification(translations[currentLang]['no-message']);
-        return;
-    }
-    navigator.clipboard.writeText(text);
-    showNotification(translations[currentLang]['copied']);
-}
-
-function resetEditor() {
-    document.getElementById('messageEditor').value = '';
-    updatePreview();
-    showNotification(translations[currentLang]['reset-done']);
-}
-
-// TRANSLATIONS
+// MARKIFY MAIN SCRIPT
 const translations = {
     fr: {
-        'subtitle': 'Emoji Copy/Paste & Message Editor',
-        'emojis-title': 'Emojis',
-        'emoji-search': '🔍 Rechercher un emoji (ex: france, coeur, fire...)',
-        'flag-info': 'ℹ️ Les drapeaux peuvent ne pas s\'afficher sur tous les systèmes. Ils fonctionnent parfaitement sur Discord !',
-        'editor-title': 'Éditeur de Message',
+        subtitle: 'Éditeur de messages et émojis pour Discord',
+        'emojis-title': 'Sélecteur d\'Émojis',
+        'emoji-search': 'Rechercher un emoji...',
+        'flag-info': '💡 <strong>Astuce drapeaux :</strong> Vous pouvez combiner deux émojis de lettres régionales pour créer des drapeaux de pays !<br>Exemple : 🇫 + 🇷 = 🇫🇷',
+        'editor-title': 'Éditeur de Messages',
         'how-to-use': 'Comment utiliser :',
-        'step1': 'Tapez votre message dans l\'éditeur',
-        'step2': 'Sélectionnez le texte à styliser',
-        'step3': 'Cliquez sur un style pour l\'appliquer',
-        'step4': 'Les codes Discord sont protégés automatiquement !',
-        'markdown-title': '💬 Markdown Discord',
-        'basic-formatting': '📝 Formatage de Base',
-        'headings': '📰 Titres',
-        'special': '✨ Spéciaux',
-        'unicode-fonts': '🎨 Polices Unicode',
+        'how-to-content': '<ul><li>Tapez votre message dans l\'éditeur</li><li>Sélectionnez la partie à styliser</li><li>Cliquez sur un style pour l\'appliquer</li><li>Les codes Discord sont automatiquement protégés</li></ul>',
+        'markdown-title': '📝 Styles Markdown Discord',
+        'basic-formatting': 'Basique',
+        'headings': 'Titres',
+        'special': 'Spéciaux',
+        'unicode-fonts': '🎭 Polices Unicode',
         'unicode-warning': '⚠️ Les polices Unicode ne se combinent pas avec le markdown Discord.',
-        'your-message': '📝 Votre Message',
-        'editor-placeholder': 'Tapez votre message ici...\n\nExemples :\n- Channel: <#123456789>\n- Rôle: <@&123456789>\n- Utilisateur: <@123456789>',
+        'your-message': '✍️ Zone de Texte',
+        'editor-placeholder': 'Tapez votre message ici...\n\nExemples :\n- Channel : <#123456789>\n- Rôle : <@&123456789>\n- Utilisateur : <@123456789>',
         'preview-title': '👁️ Aperçu Discord',
-        'preview-placeholder': 'Votre message apparaîtra ici...',
-        'copy-btn': 'Copier',
+        'preview-placeholder': 'Votre aperçu apparaîtra ici...',
+        'copy-btn': 'Copier le message',
         'reset-btn': 'Réinitialiser',
         'footer-text': 'Site créé par',
         'footer-text2': 'pour aider les gestionnaires de serveur Discord',
         'copied': '✓ Copié !',
+        'copy-error': '❌ Impossible de copier.',
         'select-text': '⚠️ Sélectionnez du texte d\'abord !',
         'style-applied': '✓ Style appliqué !',
         'no-message': '⚠️ Aucun message à copier !',
         'reset-done': '🔄 Éditeur réinitialisé !',
-        'emoji-copied': 'Emoji copié !'
+        'emoji-copied': 'Emoji ajouté et copié !',
+        'no-emoji-results': 'Aucun emoji trouvé pour cette recherche.'
     },
     en: {
-        'subtitle': 'Emoji Copy/Paste & Message Editor',
-        'emojis-title': 'Emojis',
-        'emoji-search': '🔍 Search emoji (ex: france, heart, fire...)',
-        'flag-info': 'ℹ️ Flags may not display on all systems. They work perfectly on Discord!',
+        subtitle: 'Emoji message & emoji editor for Discord',
+        'emojis-title': 'Emoji Picker',
+        'emoji-search': 'Search for an emoji...',
+        'flag-info': '💡 <strong>Flag tip:</strong> Combine two regional letter emojis to create country flags!<br>Example: 🇫 + 🇷 = 🇫🇷',
         'editor-title': 'Message Editor',
         'how-to-use': 'How to use:',
-        'step1': 'Type your message in the editor',
-        'step2': 'Select the text to style',
-        'step3': 'Click on a style to apply it',
-        'step4': 'Discord codes are automatically protected!',
-        'markdown-title': '💬 Discord Markdown',
-        'basic-formatting': '📝 Basic Formatting',
-        'headings': '📰 Headings',
-        'special': '✨ Special',
-        'unicode-fonts': '🎨 Unicode Fonts',
-        'unicode-warning': '⚠️ Unicode fonts don\'t combine with Discord markdown.',
-        'your-message': '📝 Your Message',
+        'how-to-content': '<ul><li>Type your message in the editor</li><li>Select the part to style</li><li>Click a style button to apply it</li><li>Discord codes are automatically protected</li></ul>',
+        'markdown-title': '📝 Discord Markdown Styles',
+        'basic-formatting': 'Basic',
+        'headings': 'Headings',
+        'special': 'Special',
+        'unicode-fonts': '🎭 Unicode Fonts',
+        'unicode-warning': '⚠️ Unicode fonts do not combine with Discord markdown.',
+        'your-message': '✍️ Text Area',
         'editor-placeholder': 'Type your message here...\n\nExamples:\n- Channel: <#123456789>\n- Role: <@&123456789>\n- User: <@123456789>',
         'preview-title': '👁️ Discord Preview',
-        'preview-placeholder': 'Your message will appear here...',
-        'copy-btn': 'Copy',
+        'preview-placeholder': 'Your preview will appear here...',
+        'copy-btn': 'Copy message',
         'reset-btn': 'Reset',
         'footer-text': 'Website created by',
         'footer-text2': 'to help Discord server managers',
         'copied': '✓ Copied!',
+        'copy-error': '❌ Unable to copy.',
         'select-text': '⚠️ Select text first!',
         'style-applied': '✓ Style applied!',
-        'no-message': '⚠️ No message to copy!',
-        'reset-done': '🔄 Editor reset!',
-        'emoji-copied': 'Emoji copied!'
+        'no-message': '⚠️ Nothing to copy!',
+        'reset-done': '🔄 Editor cleared!',
+        'emoji-copied': 'Emoji added and copied!',
+        'no-emoji-results': 'No emoji matches your search.'
     }
 };
 
-let currentLang = 'fr';
-let currentTheme = 'dark';
-let currentCategory = 'Smileys';
-let allEmojis = [];
+const markdownStyles = {
+    basic: [
+        { id: 'bold', labels: { fr: '**Gras**', en: '**Bold**' }, code: ['**', '**'] },
+        { id: 'italic', labels: { fr: '*Italique*', en: '*Italic*' }, code: ['*', '*'] },
+        { id: 'underline', labels: { fr: '__Souligné__', en: '__Underline__' }, code: ['__', '__'] },
+        { id: 'strikethrough', labels: { fr: '~~Barré~~', en: '~~Strikethrough~~' }, code: ['~~', '~~'] },
+        { id: 'spoiler', labels: { fr: '||Spoiler||', en: '||Spoiler||' }, code: ['||', '||'] },
+        { id: 'inline-code', labels: { fr: '`Code`', en: '`Code`' }, code: ['`', '`'] }
+    ],
+    headings: [
+        { id: 'heading1', labels: { fr: '# Titre 1', en: '# Heading 1' }, code: ['# ', ''] },
+        { id: 'heading2', labels: { fr: '## Titre 2', en: '## Heading 2' }, code: ['## ', ''] },
+        { id: 'heading3', labels: { fr: '### Titre 3', en: '### Heading 3' }, code: ['### ', ''] }
+    ],
+    special: [
+        { id: 'quote', labels: { fr: '> Citation', en: '> Quote' }, code: ['> ', ''] },
+        { id: 'multiline-quote', labels: { fr: '>>> Multi-ligne', en: '>>> Multiline' }, code: ['>>> ', ''] },
+        { id: 'codeblock', labels: { fr: '```Bloc```', en: '```Block```' }, code: ['```\n', '\n```'] },
+        { id: 'list', labels: { fr: '- Liste', en: '- List' }, code: ['- ', ''] }
+    ]
+};
 
-// UPDATE TRANSLATIONS
-function updateTranslations() {
-    document.querySelectorAll('[data-lang-key]').forEach(element => {
-        const key = element.getAttribute('data-lang-key');
-        if (translations[currentLang][key]) {
-            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                element.placeholder = translations[currentLang][key];
-            } else {
-                element.textContent = translations[currentLang][key];
-            }
-        }
-    });
-}
-    document.querySelectorAll('[data-lang-key]').forEach(element => {
-        const key = element.getAttribute('data-lang-key');
-        if (translations[currentLang][key]) {
-            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                element.placeholder = translations[currentLang][key];
-            } else {
-                element.textContent = translations[currentLang][key];
-            }
-        }
-    });
-}
+const unicodeFonts = {
+    'Bold': { offsetLower: 0x1d41a, offsetUpper: 0x1d400, offsetNumber: 0x1d7ce },
+    'Italic': { offsetLower: 0x1d44e, offsetUpper: 0x1d434 },
+    'Bold Italic': { offsetLower: 0x1d482, offsetUpper: 0x1d468 },
+    'Sans Serif': { offsetLower: 0x1d5ba, offsetUpper: 0x1d5a0, offsetNumber: 0x1d7e2 },
+    'Sans Bold': { offsetLower: 0x1d5f4, offsetUpper: 0x1d5da, offsetNumber: 0x1d7ec },
+    'Monospace': { offsetLower: 0x1d68a, offsetUpper: 0x1d670, offsetNumber: 0x1d7f6 },
+    'Double': { offsetLower: 0x1d552, offsetUpper: 0x1d538, offsetNumber: 0x1d7d8 },
+    'Script': { offsetLower: 0x1d4b6, offsetUpper: 0x1d4ae },
+    'Fraktur': { offsetLower: 0x1d586, offsetUpper: 0x1d56c },
+    'Fullwidth': { offsetLower: 0xff41, offsetUpper: 0xff21, offsetNumber: 0xff10 },
+    'Small Caps': { map: { a: 'ᴀ', b: 'ʙ', c: 'ᴄ', d: 'ᴅ', e: 'ᴇ', f: 'ꜰ', g: 'ɢ', h: 'ʜ', i: 'ɪ', j: 'ᴊ', k: 'ᴋ', l: 'ʟ', m: 'ᴍ', n: 'ɴ', o: 'ᴏ', p: 'ᴘ', q: 'ǫ', r: 'ʀ', s: 'ꜱ', t: 'ᴛ', u: 'ᴜ', v: 'ᴠ', w: 'ᴡ', x: 'x', y: 'ʏ', z: 'ᴢ' } },
+    'Upside Down': { map: { a: 'ɐ', b: 'q', c: 'ɔ', d: 'p', e: 'ǝ', f: 'ɟ', g: 'ƃ', h: 'ɥ', i: 'ᴉ', j: 'ɾ', k: 'ʞ', l: 'l', m: 'ɯ', n: 'u', o: 'o', p: 'd', q: 'b', r: 'ɹ', s: 's', t: 'ʇ', u: 'n', v: 'ʌ', w: 'ʍ', x: 'x', y: 'ʎ', z: 'z' }, reverse: true },
+    'Wavy': { map: { a: 'ค', b: '๖', c: '¢', d: '໓', e: 'ē', f: 'f', g: 'ງ', h: 'h', i: 'i', j: 'ว', k: 'k', l: 'l', m: '๓', n: 'ຖ', o: '໐', p: 'p', q: '๑', r: 'r', s: 'Ş', t: 't', u: 'น', v: 'ง', w: 'ຟ', x: 'x', y: 'ฯ', z: 'ຊ' } },
+    'Zalgo': { special: 'zalgo' },
+    'Aesthetic': { special: 'aesthetic' },
+    'Strikethrough': { special: 'strikethrough' }
+};
 
-// EMOJI DATA
 const emojiData = {
     'Smileys': [
         {e: '😀', n: ['grinning', 'smile', 'happy', 'sourire']}, {e: '😃', n: ['smiley', 'happy', 'heureux']}, {e: '😄', n: ['smile', 'laugh', 'rire']}, {e: '😁', n: ['grin', 'sourire']}, {e: '😆', n: ['laughing', 'rire']}, {e: '😅', n: ['sweat', 'smile']}, {e: '🤣', n: ['rofl', 'mdr']}, {e: '😂', n: ['joy', 'tears', 'larme']}, {e: '🙂', n: ['smile']}, {e: '😉', n: ['wink', 'clin']}, {e: '😊', n: ['blush']}, {e: '😇', n: ['angel', 'ange']}, {e: '🥰', n: ['love', 'amour', 'coeur']}, {e: '😍', n: ['heart', 'eyes']}, {e: '🤩', n: ['star', 'etoile']}, {e: '😘', n: ['kiss', 'bisou']}, {e: '😋', n: ['yum', 'miam']}, {e: '😛', n: ['tongue', 'langue']}, {e: '😜', n: ['wink', 'tongue']}, {e: '🤪', n: ['crazy', 'fou']}, {e: '😝', n: ['tongue']}, {e: '🤑', n: ['money', 'argent']}, {e: '🤗', n: ['hug', 'calin']}, {e: '🤭', n: ['oops']}, {e: '🤫', n: ['shh', 'chut']}, {e: '🤔', n: ['thinking']}, {e: '🤐', n: ['zipper']}, {e: '🤨', n: ['raised', 'eyebrow']}, {e: '😐', n: ['neutral']}, {e: '😑', n: ['expressionless']}, {e: '😶', n: ['no', 'mouth']}, {e: '😏', n: ['smirk']}, {e: '😒', n: ['unamused']}, {e: '🙄', n: ['rolling', 'eyes']}, {e: '😬', n: ['grimacing']}, {e: '🤥', n: ['lying']}, {e: '😌', n: ['relieved']}, {e: '😔', n: ['pensive']}, {e: '😪', n: ['sleepy']}, {e: '🤤', n: ['drooling']}, {e: '😴', n: ['sleeping', 'dormir']}, {e: '😷', n: ['mask', 'sick', 'malade']}, {e: '🤒', n: ['thermometer', 'sick']}, {e: '🤕', n: ['bandage']}, {e: '🤢', n: ['nauseated']}, {e: '🤮', n: ['vomiting']}, {e: '🤧', n: ['sneezing']}, {e: '🥵', n: ['hot']}, {e: '🥶', n: ['cold', 'froid']}, {e: '😵', n: ['dizzy']}, {e: '🤯', n: ['mind', 'blown']}, {e: '🥳', n: ['party', 'fete']}, {e: '😎', n: ['sunglasses', 'cool']}, {e: '🤓', n: ['nerd']}, {e: '🧐', n: ['monocle']}, {e: '😕', n: ['confused']}, {e: '😟', n: ['worried']}, {e: '🙁', n: ['slightly', 'frown']}, {e: '☹️', n: ['frown']}, {e: '😮', n: ['open', 'mouth']}, {e: '😯', n: ['hushed']}, {e: '😲', n: ['astonished']}, {e: '😳', n: ['flushed']}, {e: '🥺', n: ['pleading']}, {e: '😦', n: ['frowning']}, {e: '😧', n: ['anguished']}, {e: '😨', n: ['fearful', 'peur']}, {e: '😰', n: ['anxious', 'sweat']}, {e: '😥', n: ['sad', 'triste']}, {e: '😢', n: ['cry', 'pleurer']}, {e: '😭', n: ['loudly', 'crying']}, {e: '😱', n: ['scream']}, {e: '😖', n: ['confounded']}, {e: '😣', n: ['persevering']}, {e: '😞', n: ['disappointed']}, {e: '😓', n: ['downcast', 'sweat']}, {e: '😩', n: ['weary']}, {e: '😫', n: ['tired']}, {e: '🥱', n: ['yawning']}, {e: '😤', n: ['triumph']}, {e: '😡', n: ['angry', 'colere']}, {e: '😠', n: ['anger']}, {e: '🤬', n: ['cursing']}, {e: '👿', n: ['imp']}, {e: '💀', n: ['skull', 'mort', 'death']}, {e: '☠️', n: ['skull', 'crossbones']}, {e: '💩', n: ['poop', 'caca']}, {e: '🤡', n: ['clown']}, {e: '👹', n: ['ogre']}, {e: '👺', n: ['goblin']}, {e: '👻', n: ['ghost', 'fantome']}, {e: '👽', n: ['alien']}, {e: '👾', n: ['alien', 'space']}, {e: '🤖', n: ['robot']}, {e: '😺', n: ['cat', 'smile', 'chat']}, {e: '😸', n: ['cat', 'grin']}, {e: '😹', n: ['cat', 'joy']}, {e: '😻', n: ['cat', 'heart']}, {e: '😼', n: ['cat', 'smirk']}, {e: '😽', n: ['cat', 'kiss']}, {e: '🙀', n: ['cat', 'scream']}, {e: '😿', n: ['cat', 'cry']}, {e: '😾', n: ['cat', 'pouting']}
@@ -187,156 +138,227 @@ const emojiData = {
     ]
 };
 
-// MARKDOWN STYLES
-const markdownStyles = {
-    basic: [
-        {name: '**Gras**', code: ['**', '**']},
-        {name: '*Italique*', code: ['*', '*']},
-        {name: '__Souligné__', code: ['__', '__']},
-        {name: '~~Barré~~', code: ['~~', '~~']},
-        {name: '||Spoiler||', code: ['||', '||']},
-        {name: '`Code`', code: ['`', '`']}
-    ],
-    headings: [
-        {name: '# Titre 1', code: ['# ', '']},
-        {name: '## Titre 2', code: ['## ', '']},
-        {name: '### Titre 3', code: ['### ', '']}
-    ],
-    special: [
-        {name: '> Citation', code: ['> ', '']},
-        {name: '>>> Multi-ligne', code: ['>>> ', '']},
-        {name: '```Bloc Code```', code: ['```\n', '\n```']},
-        {name: '- Liste', code: ['- ', '']}
-    ]
-};
 
-// UNICODE FONTS
-const unicodeFonts = {
-    'Bold': {chars: 'ðšð›ðœððžðŸð ð¡ð¢ð£ð¤ð¥ð¦ð§ð¨ð©ðªð«ð¬ðð®ð¯ð°ð±ð²ð³ð­', offset: 120211},
-    'Italic': {chars: '𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻', offset: 120263},
-    'Bold Italic': {chars: '𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯', offset: 120315},
-    'Sans': {chars: '𝖺𝖻𝖼𝖽𝖾𝖿𝗀𝗁𝗂𝗃𝗄𝗅𝗆𝗇𝗈𝗉𝗊𝗋𝗌𝗍𝗎𝗏𝗐𝗑𝗒𝗓', offset: 120575},
-    'Sans Bold': {chars: '𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇', offset: 120627},
-    'Monospace': {chars: '𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣', offset: 120783},
-    'Bubble': {chars: 'ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ', offset: 9327},
-    'Square': {chars: '🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉', offset: 127280},
-    'Squared Neg': {chars: '🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉', offset: 127344},
-    'Fraktur': {chars: '𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷', offset: 120093},
-    'Double': {chars: '𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫', offset: 120145},
-    'Script': {chars: '𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏', offset: 119990},
-    'Fullwidth': {chars: 'ï½�ï½‚ï½ƒï½„ï½…ï½†ï½‡ï½ˆï½‰ï½Šï½‹ï½Œï½�ï½Žï½�ï½�ï½'ï½'ï½"ï½"ï½•ï½–ï½—ï½˜ï½™ï½š', offset: 65345},
-    'Small Caps': {map: {'a':'ᴀ','b':'ʙ','c':'ᴄ','d':'ᴅ','e':'ᴇ','f':'ꜰ','g':'ɢ','h':'ʜ','i':'ɪ','j':'ᴊ','k':'ᴋ','l':'ʟ','m':'ᴍ','n':'ɴ','o':'ᴏ','p':'ᴘ','q':'ǫ','r':'ʀ','s':'ꜱ','t':'ᴛ','u':'ᴜ','v':'ᴠ','w':'ᴡ','x':'x','y':'ʏ','z':'ᴢ'}},
-    'Upside Down': {map: {'a':'ɐ','b':'q','c':'ɔ','d':'p','e':'ǝ','f':'ɟ','g':'ƃ','h':'ɥ','i':'ᴉ','j':'ɾ','k':'ʞ','l':'l','m':'ɯ','n':'u','o':'o','p':'d','q':'b','r':'ɹ','s':'s','t':'ʇ','u':'n','v':'ʌ','w':'ʍ','x':'x','y':'ʎ','z':'z'}},
-    'Wavy': {chars: 'ค๖¢໓ēfງhiว่kl๓ຖ໐p๑rŞtนงຟxฯຊ', map: {'a':'ค','b':'๖','c':'¢','d':'໓','e':'ē','f':'f','g':'ງ','h':'h','i':'i','j':'ว','k':'k','l':'l','m':'๓','n':'ຖ','o':'໐','p':'p','q':'๑','r':'r','s':'Ş','t':'t','u':'น','v':'ง','w':'ຟ','x':'x','y':'ฯ','z':'ຊ'}},
-    'Zalgo': {special: 'zalgo'},
-    'Aesthetic': {special: 'aesthetic'},
-    'Strikethrough': {special: 'strikethrough'}
-};
-
+let currentLang = 'fr';
+let currentTheme = 'dark';
 let currentCategory = 'Smileys';
 let allEmojis = [];
+let notificationTimeout;
+let fontsInitialized = false;
 
-// INIT
-window.onload = function() {
-    initEmojiTabs();
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('emojiSearch').addEventListener('input', searchEmojis);
+    document.getElementById('messageEditor').addEventListener('input', updatePreview);
+    document.getElementById('messagePreview').addEventListener('click', handlePreviewClick);
+    initEmojis();
     initMarkdownButtons();
     initFontButtons();
-    showCategory('Smileys');
-    
-    // Real-time preview
-    document.getElementById('messageEditor').addEventListener('input', updatePreview);
+    updateTranslations();
     updatePreview();
-};
+});
 
-// EMOJI TABS
-function initEmojiTabs() {
-    const tabsContainer = document.getElementById('emojiTabs');
-    Object.keys(emojiData).forEach(category => {
-        const btn = document.createElement('button');
-        btn.className = 'tab';
-        btn.textContent = category;
-        btn.onclick = () => showCategory(category);
-        tabsContainer.appendChild(btn);
-    });
+function toggleTheme() {
+    const body = document.body;
+    body.classList.toggle('light');
+    currentTheme = body.classList.contains('light') ? 'light' : 'dark';
+    document.getElementById('themeBtn').textContent = currentTheme === 'light' ? '☀️ Light' : '🌙 Dark';
 }
 
-function showCategory(category) {
-    currentCategory = category;
-    
-    // Update tabs
-    document.querySelectorAll('.tab').forEach((tab, index) => {
-        tab.classList.toggle('active', Object.keys(emojiData)[index] === category);
+function toggleLanguage() {
+    currentLang = currentLang === 'fr' ? 'en' : 'fr';
+    document.documentElement.lang = currentLang;
+    document.getElementById('langBtn').textContent = currentLang === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN';
+    updateTranslations();
+    initMarkdownButtons();
+    const query = document.getElementById('emojiSearch').value.trim();
+    if (query) {
+        searchEmojis();
+    } else {
+        showCategory(currentCategory, false);
+    }
+    updatePreview();
+}
+
+function updateTranslations() {
+    const t = translations[currentLang];
+    document.documentElement.lang = currentLang;
+    document.getElementById('subtitle').textContent = t.subtitle;
+    document.getElementById('emojiTitle').textContent = t['emojis-title'];
+    const searchInput = document.getElementById('emojiSearch');
+    searchInput.placeholder = t['emoji-search'];
+    const flagInfo = document.getElementById('flagInfo');
+    flagInfo.innerHTML = t['flag-info'];
+    document.getElementById('editorTitle').textContent = t['editor-title'];
+    document.getElementById('editorInfoTitle').textContent = t['how-to-use'];
+    document.getElementById('editorInfoText').innerHTML = t['how-to-content'];
+    document.getElementById('markdownTitle').textContent = t['markdown-title'];
+    document.getElementById('basicMarkdownTitle').textContent = t['basic-formatting'];
+    document.getElementById('headingMarkdownTitle').textContent = t['headings'];
+    document.getElementById('specialMarkdownTitle').textContent = t['special'];
+    document.getElementById('fontsTitle').textContent = t['unicode-fonts'];
+    document.getElementById('fontsInfo').textContent = t['unicode-warning'];
+    document.getElementById('textEditorTitle').textContent = t['your-message'];
+    document.getElementById('messageEditor').placeholder = t['editor-placeholder'];
+    document.getElementById('copyBtnText').textContent = t['copy-btn'];
+    document.getElementById('resetBtnText').textContent = t['reset-btn'];
+    document.getElementById('previewTitle').textContent = t['preview-title'];
+    document.getElementById('footerText').textContent = t['footer-text'];
+    document.getElementById('footerText2').textContent = t['footer-text2'];
+
+    const editorValue = document.getElementById('messageEditor').value;
+    if (!editorValue) {
+        document.getElementById('messagePreview').textContent = t['preview-placeholder'];
+    }
+}
+
+function initEmojis() {
+    const tabsContainer = document.getElementById('emojiTabs');
+    tabsContainer.innerHTML = '';
+    const categories = Object.keys(emojiData);
+    categories.forEach((category, index) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'tab';
+        btn.dataset.category = category;
+        btn.textContent = category;
+        btn.addEventListener('click', () => showCategory(category));
+        if (index === 0) {
+            btn.classList.add('active');
+            currentCategory = category;
+        }
+        tabsContainer.appendChild(btn);
     });
-    
-    // Show/hide flag info
+    allEmojis = categories.reduce((acc, key) => acc.concat(emojiData[key]), []);
+    showCategory(currentCategory);
+}
+
+function showCategory(category, resetSearch = true) {
+    currentCategory = category;
+    document.querySelectorAll('#emojiTabs .tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.category === category);
+    });
+    if (resetSearch) {
+        document.getElementById('emojiSearch').value = '';
+    }
     document.getElementById('flagInfo').style.display = category === 'Drapeaux' ? 'block' : 'none';
-    
-    // Display emojis
     displayEmojis(emojiData[category]);
 }
 
 function displayEmojis(emojis) {
-    allEmojis = emojis;
     const grid = document.getElementById('emojiGrid');
     grid.innerHTML = '';
-    
+    if (!emojis || emojis.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = translations[currentLang]['no-emoji-results'];
+        grid.appendChild(empty);
+        return;
+    }
     emojis.forEach(emoji => {
-        const div = document.createElement('div');
-        div.className = 'emoji-item';
-        div.textContent = emoji.e;
-        div.onclick = () => copyEmoji(emoji.e);
-        grid.appendChild(div);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'emoji-item';
+        button.textContent = emoji.e;
+        button.title = emoji.n.join(', ');
+        button.addEventListener('click', () => handleEmojiSelection(emoji.e));
+        grid.appendChild(button);
     });
 }
 
 function searchEmojis() {
-    const query = document.getElementById('emojiSearch').value.toLowerCase();
+    const query = document.getElementById('emojiSearch').value.trim().toLowerCase();
     if (!query) {
-        displayEmojis(emojiData[currentCategory]);
+        showCategory(currentCategory, false);
         return;
     }
-    
-    const filtered = allEmojis.filter(emoji => 
-        emoji.n.some(name => name.includes(query))
-    );
+    const filtered = allEmojis.filter(emoji => emoji.n.some(name => name.toLowerCase().includes(query)));
     displayEmojis(filtered);
 }
 
-function copyEmoji(emoji) {
-    navigator.clipboard.writeText(emoji);
-    showNotification(translations[currentLang]['emoji-copied']);
+async function copyMessage() {
+    const editor = document.getElementById('messageEditor');
+    const text = editor.value;
+    if (!text.trim()) {
+        showNotification(translations[currentLang]['no-message'], 'warning');
+        return;
+    }
+    const success = await copyToClipboard(text);
+    showNotification(success ? translations[currentLang]['copied'] : translations[currentLang]['copy-error'], success ? 'success' : 'error');
 }
 
-// MARKDOWN BUTTONS
+function resetEditor() {
+    document.getElementById('messageEditor').value = '';
+    updatePreview();
+    showNotification(translations[currentLang]['reset-done'], 'success');
+}
+
+async function handleEmojiSelection(emojiChar) {
+    insertEmoji(emojiChar);
+    const success = await copyToClipboard(emojiChar);
+    showNotification(success ? translations[currentLang]['emoji-copied'] : translations[currentLang]['copy-error'], success ? 'success' : 'error');
+}
+
+function insertEmoji(emojiChar) {
+    const editor = document.getElementById('messageEditor');
+    const start = editor.selectionStart ?? editor.value.length;
+    const end = editor.selectionEnd ?? start;
+    const before = editor.value.slice(0, start);
+    const after = editor.value.slice(end);
+    editor.value = before + emojiChar + after;
+    const newPosition = start + emojiChar.length;
+    editor.focus();
+    editor.setSelectionRange(newPosition, newPosition);
+    updatePreview();
+}
+
+async function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (error) {
+            return fallbackCopy(text);
+        }
+    }
+    return fallbackCopy(text);
+}
+
+function fallbackCopy(text) {
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const success = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return success;
+    } catch (error) {
+        return false;
+    }
+}
+
 function initMarkdownButtons() {
-    // Basic
-    const basicGrid = document.getElementById('basicMarkdown');
-    markdownStyles.basic.forEach(style => {
-        const btn = createStyleButton(style);
-        basicGrid.appendChild(btn);
+    const containers = {
+        basic: document.getElementById('basicMarkdown'),
+        headings: document.getElementById('headingMarkdown'),
+        special: document.getElementById('specialMarkdown')
+    };
+    Object.values(containers).forEach(container => {
+        container.innerHTML = '';
     });
-    
-    // Headings
-    const headingGrid = document.getElementById('headingMarkdown');
-    markdownStyles.headings.forEach(style => {
-        const btn = createStyleButton(style);
-        headingGrid.appendChild(btn);
+    Object.entries(markdownStyles).forEach(([group, styles]) => {
+        styles.forEach(style => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'style-btn';
+            btn.textContent = style.labels[currentLang];
+            btn.addEventListener('click', () => applyMarkdown(style.code));
+            containers[group].appendChild(btn);
+        });
     });
-    
-    // Special
-    const specialGrid = document.getElementById('specialMarkdown');
-    markdownStyles.special.forEach(style => {
-        const btn = createStyleButton(style);
-        specialGrid.appendChild(btn);
-    });
-}
-
-function createStyleButton(style) {
-    const btn = document.createElement('button');
-    btn.className = 'style-btn';
-    btn.textContent = style.name;
-    btn.onclick = () => applyMarkdown(style.code);
-    return btn;
 }
 
 function applyMarkdown(codes) {
@@ -344,137 +366,153 @@ function applyMarkdown(codes) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
     const selectedText = editor.value.substring(start, end);
-    
     if (!selectedText) {
-        showNotification(translations[currentLang]['select-text']);
+        showNotification(translations[currentLang]['select-text'], 'warning');
         return;
     }
-    
     const before = editor.value.substring(0, start);
     const after = editor.value.substring(end);
     const newText = codes[0] + selectedText + codes[1];
-    
     editor.value = before + newText + after;
+    const newPos = start + newText.length;
     editor.focus();
-    
-    // Move cursor
-    const newPos = start + codes[0].length + selectedText.length + codes[1].length;
     editor.setSelectionRange(newPos, newPos);
-    
     updatePreview();
-    showNotification(translations[currentLang]['style-applied']);
+    showNotification(translations[currentLang]['style-applied'], 'success');
 }
 
-// FONT BUTTONS
 function initFontButtons() {
+    if (fontsInitialized) {
+        return;
+    }
+    fontsInitialized = true;
     const grid = document.getElementById('fontGrid');
     Object.entries(unicodeFonts).forEach(([name, data]) => {
         const btn = document.createElement('button');
+        btn.type = 'button';
         btn.className = 'style-btn';
         btn.textContent = name;
-        btn.onclick = () => applyFont(name, data);
+        btn.addEventListener('click', () => applyFont(data));
         grid.appendChild(btn);
     });
 }
 
-function applyFont(name, data) {
+function applyFont(data) {
     const editor = document.getElementById('messageEditor');
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
     const selectedText = editor.value.substring(start, end);
-    
     if (!selectedText) {
-        showNotification(translations[currentLang]['select-text']);
+        showNotification(translations[currentLang]['select-text'], 'warning');
         return;
     }
-    
     let converted = '';
-    
     if (data.special === 'zalgo') {
         converted = addZalgo(selectedText);
     } else if (data.special === 'aesthetic') {
         converted = selectedText.split('').join(' ');
     } else if (data.special === 'strikethrough') {
-        converted = selectedText.split('').map(c => c + '\u0336').join('');
-    } else if (data.map) {
-        converted = selectedText.split('').map(c => data.map[c.toLowerCase()] || c).join('');
-    } else if (data.offset) {
-        converted = selectedText.split('').map(c => {
-            const code = c.charCodeAt(0);
-            if (code >= 97 && code <= 122) {
-                return String.fromCodePoint(data.offset + (code - 97));
-            } else if (code >= 65 && code <= 90) {
-                return String.fromCodePoint(data.offset - 32 + (code - 65));
-            }
-            return c;
-        }).join('');
+        converted = selectedText.split('').map(char => char + '̶').join('');
+    } else {
+        converted = selectedText.split('').map(char => mapCharacter(char, data)).join('');
+        if (data.reverse) {
+            converted = converted.split('').reverse().join('');
+        }
     }
-    
     const before = editor.value.substring(0, start);
     const after = editor.value.substring(end);
     editor.value = before + converted + after;
-    editor.focus();
-    
     const newPos = start + converted.length;
+    editor.focus();
     editor.setSelectionRange(newPos, newPos);
-    
     updatePreview();
-    showNotification(translations[currentLang]['style-applied']);
+    showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function mapCharacter(char, data) {
+    const lower = char.toLowerCase();
+    if (data.map && data.map[lower]) {
+        return data.map[lower];
+    }
+    const code = char.codePointAt(0);
+    if (code >= 97 && code <= 122 && data.offsetLower !== undefined) {
+        return String.fromCodePoint(data.offsetLower + (code - 97));
+    }
+    if (code >= 65 && code <= 90 && data.offsetUpper !== undefined) {
+        return String.fromCodePoint(data.offsetUpper + (code - 65));
+    }
+    if (code >= 48 && code <= 57 && data.offsetNumber !== undefined) {
+        return String.fromCodePoint(data.offsetNumber + (code - 48));
+    }
+    return char;
 }
 
 function addZalgo(text) {
-    const zalgoChars = [
-        '\u0300', '\u0301', '\u0302', '\u0303', '\u0304', '\u0305', '\u0306', '\u0307',
-        '\u0308', '\u0309', '\u030A', '\u030B', '\u030C', '\u030D', '\u030E', '\u030F',
-        '\u0310', '\u0311', '\u0312', '\u0313', '\u0314', '\u0315', '\u0316', '\u0317',
-        '\u0318', '\u0319', '\u031A', '\u031B', '\u031C', '\u031D', '\u031E', '\u031F',
-        '\u0320', '\u0321', '\u0322', '\u0323', '\u0324', '\u0325', '\u0326', '\u0327',
-        '\u0328', '\u0329', '\u032A', '\u032B', '\u032C', '\u032D', '\u032E', '\u032F',
-        '\u0330', '\u0331', '\u0332', '\u0333', '\u0334', '\u0335', '\u0336'
-    ];
-    return text.split('').map(c => {
-        let result = c;
-        for (let i = 0; i < 3; i++) {
+    const zalgoChars = ['̀', '́', '̂', '̃', '̄', '̅', '̆', '̇', '̈', '̉', '̊', '̋', '̌', '̍', '̎', '̏', '̐', '̑', '̒', '̓', '̔', '̕', '̖', '̗', '̘', '̙', '̚', '̛', '̜', '̝', '̞', '̟', '̠', '̡', '̢', '̣', '̤', '̥', '̦', '̧', '̨', '̩', '̪', '̫', '̬', '̭', '̮', '̯', '̰', '̱', '̲', '̳', '̴', '̵', '̶'];
+    return text.split('').map(char => {
+        let result = char;
+        for (let i = 0; i < 3; i += 1) {
             result += zalgoChars[Math.floor(Math.random() * zalgoChars.length)];
         }
         return result;
     }).join('');
 }
 
-// PREVIEW
 function updatePreview() {
-    const text = document.getElementById('messageEditor').value;
+    const editor = document.getElementById('messageEditor');
     const preview = document.getElementById('messagePreview');
-    
+    const text = editor.value;
     if (!text) {
         preview.textContent = translations[currentLang]['preview-placeholder'];
         return;
     }
-    
-    // Simulate Discord rendering (basic)
-    let html = text
-        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
-        .replace(/__(.+?)__/g, '<u>$1</u>')
-        .replace(/~~(.+?)~~/g, '<s>$1</s>')
-        .replace(/\|\|(.+?)\|\|/g, '<span style="background:#000;color:#000">$1</span>')
-        .replace(/`(.+?)`/g, '<code style="background:var(--code-bg);padding:2px 4px;border-radius:3px">$1</code>')
-        .replace(/^# (.+)$/gm, '<h1 style="font-size:2em;margin:0.5em 0">$1</h1>')
-        .replace(/^## (.+)$/gm, '<h2 style="font-size:1.5em;margin:0.5em 0">$1</h2>')
-        .replace(/^### (.+)$/gm, '<h3 style="font-size:1.2em;margin:0.5em 0">$1</h3>')
-        .replace(/^> (.+)$/gm, '<blockquote style="border-left:4px solid var(--accent);padding-left:10px;margin:5px 0">$1</blockquote>')
-        .replace(/^- (.+)$/gm, '<li style="margin-left:20px">$1</li>')
-        .replace(/<#(\d+)>/g, '<span style="color:var(--accent)">#channel</span>')
-        .replace(/<@&(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 2px;border-radius:3px">@role</span>')
-        .replace(/<@(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 2px;border-radius:3px">@user</span>');
-    
-    preview.innerHTML = html;
+    const codeBlocks = [];
+    let processed = text.replace(/```([\s\S]*?)```/g, (_, code) => {
+        const token = `__CODEBLOCK_${codeBlocks.length}__`;
+        codeBlocks.push(`<pre><code>${escapeHTML(code)}</code></pre>`);
+        return token;
+    });
+    processed = escapeHTML(processed);
+    processed = processed.replace(/`([^`]+)`/g, (_, code) => `<code style="background:var(--code-bg);padding:2px 4px;border-radius:3px;">${code}</code>`);
+    processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    processed = processed.replace(/__(.+?)__/g, '<u>$1</u>');
+    processed = processed.replace(/~~(.+?)~~/g, '<s>$1</s>');
+    processed = processed.replace(/\|\|(.+?)\|\|/g, '<span class="spoiler">$1</span>');
+    processed = processed.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    processed = processed.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    processed = processed.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    processed = processed.replace(/^>>> (.+)$/gm, '<blockquote>$1</blockquote>');
+    processed = processed.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+    processed = processed.replace(/^- (.+)$/gm, '<div class="list-item">• $1</div>');
+    processed = processed.replace(/<#(\d+)>/g, '<span style="color:var(--accent);">#channel</span>');
+    processed = processed.replace(/<@&(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 4px;border-radius:4px;">@role</span>');
+    processed = processed.replace(/<@(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 4px;border-radius:4px;">@user</span>');
+    processed = processed.replace(/\n/g, '<br>');
+    codeBlocks.forEach((block, index) => {
+        processed = processed.replace(`__CODEBLOCK_${index}__`, block);
+    });
+    preview.innerHTML = processed;
 }
 
-// NOTIFICATION
-function showNotification(message) {
+function escapeHTML(str) {
+    const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+    return str.replace(/[&<>"']/g, char => entities[char] || char);
+}
+
+function handlePreviewClick(event) {
+    if (event.target.classList.contains('spoiler')) {
+        event.target.classList.toggle('revealed');
+    }
+}
+
+function showNotification(message, type = 'success') {
     const notif = document.getElementById('notification');
+    notif.classList.remove('success', 'warning', 'error');
     notif.textContent = message;
-    notif.classList.add('show');
-    setTimeout(() => notif.classList.remove('show'), 2000);
+    notif.classList.add('show', type);
+    clearTimeout(notificationTimeout);
+    notificationTimeout = setTimeout(() => {
+        notif.classList.remove('show');
+    }, 2000);
 }
