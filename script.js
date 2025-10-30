@@ -13,7 +13,7 @@ const translations = {
         'headings': 'Titres',
         'special': 'Spéciaux',
         'unicode-fonts': 'Polices Unicode',
-        'unicode-warning': '⚠️ Les polices Unicode ne se combinent pas avec le markdown Discord.',
+        'unicode-warning': '⚠️ Combiner Markdown et polices Unicode peut altérer l\'affichage final sur Discord.',
         'your-message': 'Zone de Texte',
         'editor-placeholder': 'Tapez votre message ici...\n\nExemples :\n- Channel : <#123456789>\n- Rôle : <@&123456789>\n- Utilisateur : <@123456789>',
         'preview-title': 'Aperçu Discord',
@@ -26,10 +26,13 @@ const translations = {
         'copy-error': '❌ Impossible de copier.',
         'select-text': '⚠️ Sélectionnez du texte d\'abord !',
         'style-applied': '✓ Style appliqué !',
+        'markdown-order-warning': '⚠️ Ordre Markdown incorrect : placez d\'abord le symbole de structure (#, >, -), puis appliquez le style.',
+        'protected-warning': '⚠️ Format protégé détecté : modification ignorée.',
         'no-message': '⚠️ Aucun message à copier !',
         'reset-done': '🔄 Éditeur réinitialisé !',
         'emoji-copied': 'Emoji ajouté et copié !',
-        'no-emoji-results': 'Aucun emoji trouvé pour cette recherche.'
+        'no-emoji-results': 'Aucun emoji trouvé pour cette recherche.',
+        'style-sample': 'Texte'
     },
     en: {
         subtitle: 'Emoji message & emoji editor for Discord',
@@ -44,7 +47,7 @@ const translations = {
         'headings': 'Headings',
         'special': 'Special',
         'unicode-fonts': 'Unicode Fonts',
-        'unicode-warning': '⚠️ Unicode fonts do not combine with Discord markdown.',
+        'unicode-warning': '⚠️ Combining Markdown and Unicode fonts may change the final rendering on Discord.',
         'your-message': 'Text Area',
         'editor-placeholder': 'Type your message here...\n\nExamples:\n- Channel: <#123456789>\n- Role: <@&123456789>\n- User: <@123456789>',
         'preview-title': 'Discord Preview',
@@ -57,34 +60,131 @@ const translations = {
         'copy-error': '❌ Unable to copy.',
         'select-text': '⚠️ Select text first!',
         'style-applied': '✓ Style applied!',
+        'markdown-order-warning': '⚠️ Markdown order error: add the structure symbol (#, >, -) before applying the style.',
+        'protected-warning': '⚠️ Protected Discord format detected: action ignored.',
         'no-message': '⚠️ Nothing to copy!',
         'reset-done': '🔄 Editor cleared!',
         'emoji-copied': 'Emoji added and copied!',
-        'no-emoji-results': 'No emoji matches your search.'
+        'no-emoji-results': 'No emoji matches your search.',
+        'style-sample': 'Text'
     }
 };
 
 const markdownStyles = {
     basic: [
-        { id: 'bold', labels: { fr: '**Gras**', en: '**Bold**' }, code: ['**', '**'] },
-        { id: 'italic', labels: { fr: '*Italique*', en: '*Italic*' }, code: ['*', '*'] },
-        { id: 'underline', labels: { fr: '__Souligné__', en: '__Underline__' }, code: ['__', '__'] },
-        { id: 'strikethrough', labels: { fr: '~~Barré~~', en: '~~Strikethrough~~' }, code: ['~~', '~~'] },
-        { id: 'spoiler', labels: { fr: '||Spoiler||', en: '||Spoiler||' }, code: ['||', '||'] },
-        { id: 'inline-code', labels: { fr: '`Code`', en: '`Code`' }, code: ['`', '`'] }
+        {
+            id: 'bold',
+            labels: { fr: 'Gras', en: 'Bold' },
+            prefix: '**',
+            suffix: '**',
+            type: 'style',
+            preview: sample => `<strong>${sample}</strong>`
+        },
+        {
+            id: 'italic',
+            labels: { fr: 'Italique', en: 'Italic' },
+            prefix: '*',
+            suffix: '*',
+            type: 'style',
+            preview: sample => `<em>${sample}</em>`
+        },
+        {
+            id: 'underline',
+            labels: { fr: 'Souligné', en: 'Underline' },
+            prefix: '__',
+            suffix: '__',
+            type: 'style',
+            preview: sample => `<span class="preview-underline">${sample}</span>`
+        },
+        {
+            id: 'strikethrough',
+            labels: { fr: 'Barré', en: 'Strikethrough' },
+            prefix: '~~',
+            suffix: '~~',
+            type: 'style',
+            preview: sample => `<s>${sample}</s>`
+        },
+        {
+            id: 'spoiler',
+            labels: { fr: 'Spoiler', en: 'Spoiler' },
+            prefix: '||',
+            suffix: '||',
+            type: 'style',
+            preview: sample => `<span class="preview-spoiler">${sample}</span>`
+        },
+        {
+            id: 'inline-code',
+            labels: { fr: 'Code inline', en: 'Inline code' },
+            prefix: '`',
+            suffix: '`',
+            type: 'style',
+            preview: sample => `<code class="preview-code">${sample}</code>`
+        }
     ],
     headings: [
-        { id: 'heading1', labels: { fr: '# Titre 1', en: '# Heading 1' }, code: ['# ', ''] },
-        { id: 'heading2', labels: { fr: '## Titre 2', en: '## Heading 2' }, code: ['## ', ''] },
-        { id: 'heading3', labels: { fr: '### Titre 3', en: '### Heading 3' }, code: ['### ', ''] }
+        {
+            id: 'heading1',
+            labels: { fr: 'Titre 1', en: 'Heading 1' },
+            prefix: '# ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-heading h1">${sample}</span>`
+        },
+        {
+            id: 'heading2',
+            labels: { fr: 'Titre 2', en: 'Heading 2' },
+            prefix: '## ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-heading h2">${sample}</span>`
+        },
+        {
+            id: 'heading3',
+            labels: { fr: 'Titre 3', en: 'Heading 3' },
+            prefix: '### ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-heading h3">${sample}</span>`
+        }
     ],
     special: [
-        { id: 'quote', labels: { fr: '> Citation', en: '> Quote' }, code: ['> ', ''] },
-        { id: 'multiline-quote', labels: { fr: '>>> Multi-ligne', en: '>>> Multiline' }, code: ['>>> ', ''] },
-        { id: 'codeblock', labels: { fr: '```Bloc```', en: '```Block```' }, code: ['```\n', '\n```'] },
-        { id: 'list', labels: { fr: '- Liste', en: '- List' }, code: ['- ', ''] }
+        {
+            id: 'quote',
+            labels: { fr: 'Citation', en: 'Quote' },
+            prefix: '> ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-quote">&gt; ${sample}</span>`
+        },
+        {
+            id: 'multiline-quote',
+            labels: { fr: 'Citation multi-ligne', en: 'Multiline quote' },
+            prefix: '>>> ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-quote">&gt;&gt;&gt; ${sample}</span>`
+        },
+        {
+            id: 'codeblock',
+            labels: { fr: 'Bloc de code', en: 'Code block' },
+            prefix: '```
+',
+            suffix: '
+```',
+            type: 'block',
+            preview: sample => `<span class="preview-code">${sample}</span>`
+        },
+        {
+            id: 'list',
+            labels: { fr: 'Liste', en: 'List' },
+            prefix: '- ',
+            suffix: '',
+            type: 'structure',
+            preview: sample => `<span class="preview-list">${sample}</span>`
+        }
     ]
 };
+
 
 const unicodeFonts = {
     'Bold': { offsetLower: 0x1d41a, offsetUpper: 0x1d400, offsetNumber: 0x1d7ce },
@@ -104,6 +204,8 @@ const unicodeFonts = {
     'Aesthetic': { special: 'aesthetic' },
     'Strikethrough': { special: 'strikethrough' }
 };
+
+const protectedPattern = /(\[[^\]]+\]\(https?:\/\/[^)]+\)|<#[0-9]+>|<@&[0-9]+>|<@[0-9]+>)/;
 
 const emojiData = {
     'Smileys': [
@@ -144,7 +246,6 @@ let currentTheme = 'dark';
 let currentCategory = 'Smileys';
 let allEmojis = [];
 let notificationTimeout;
-let fontsInitialized = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('emojiSearch').addEventListener('input', searchEmojis);
@@ -170,6 +271,7 @@ function toggleLanguage() {
     document.getElementById('langBtn').textContent = currentLang === 'fr' ? 'FR' : 'EN';
     updateTranslations();
     initMarkdownButtons();
+    initFontButtons();
     const query = document.getElementById('emojiSearch').value.trim();
     if (query) {
         searchEmojis();
@@ -349,84 +451,374 @@ function initMarkdownButtons() {
     Object.values(containers).forEach(container => {
         container.innerHTML = '';
     });
+    const sample = translations[currentLang]['style-sample'];
     Object.entries(markdownStyles).forEach(([group, styles]) => {
         styles.forEach(style => {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'style-btn';
-            btn.textContent = style.labels[currentLang];
-            btn.addEventListener('click', () => applyMarkdown(style.code));
+            const previewContent = typeof style.preview === 'function' ? style.preview(sample) : sample;
+            btn.innerHTML = `<span class="style-preview">${previewContent}</span><span class="style-caption">${style.labels[currentLang]}</span>`;
+            btn.setAttribute('aria-label', style.labels[currentLang]);
+            btn.addEventListener('click', () => applyMarkdown(style));
             containers[group].appendChild(btn);
         });
     });
 }
 
-function applyMarkdown(codes) {
-    const editor = document.getElementById('messageEditor');
-    const start = editor.selectionStart;
-    const end = editor.selectionEnd;
-    const selectedText = editor.value.substring(start, end);
-    if (!selectedText) {
-        showNotification(translations[currentLang]['select-text'], 'warning');
+function applyMarkdown(style) {
+    if (!style) {
         return;
     }
-    const before = editor.value.substring(0, start);
-    const after = editor.value.substring(end);
-    const newText = codes[0] + selectedText + codes[1];
-    editor.value = before + newText + after;
-    const newPos = start + newText.length;
-    editor.focus();
-    editor.setSelectionRange(newPos, newPos);
-    updatePreview();
-    showNotification(translations[currentLang]['style-applied'], 'success');
+    if (style.type === 'structure') {
+        applyStructureStyle(style);
+        return;
+    }
+    if (style.type === 'block') {
+        applyBlockStyle(style);
+        return;
+    }
+    applyInlineStyle(style);
 }
 
 function initFontButtons() {
-    if (fontsInitialized) {
-        return;
-    }
-    fontsInitialized = true;
     const grid = document.getElementById('fontGrid');
+    grid.innerHTML = '';
+    const sample = translations[currentLang]['style-sample'];
     Object.entries(unicodeFonts).forEach(([name, data]) => {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'style-btn';
-        btn.textContent = name;
-        btn.addEventListener('click', () => applyFont(data));
+        const previewText = escapeHTML(transformFontSample(sample, data));
+        btn.innerHTML = `<span class="style-preview">${previewText}</span><span class="style-caption">${name}</span>`;
+        btn.setAttribute('aria-label', name);
+        btn.addEventListener('click', () => applyFont(name, data));
         grid.appendChild(btn);
     });
 }
 
-function applyFont(data) {
+function applyInlineStyle(style) {
     const editor = document.getElementById('messageEditor');
+    const prefix = style.prefix || '';
+    const suffix = style.suffix || '';
+    const value = editor.value;
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
-    const selectedText = editor.value.substring(start, end);
-    if (!selectedText) {
+    if (start === end) {
+        const before = value.slice(0, start);
+        const after = value.slice(end);
+        if (before.endsWith(prefix) && after.startsWith(suffix)) {
+            editor.value = before.slice(0, -prefix.length) + after.slice(suffix.length);
+            const caret = start - prefix.length;
+            editor.focus();
+            editor.setSelectionRange(caret, caret);
+            updatePreview();
+            showNotification(translations[currentLang]['style-applied'], 'success');
+            return;
+        }
+        editor.value = before + prefix + suffix + after;
+        const caret = start + prefix.length;
+        editor.focus();
+        editor.setSelectionRange(caret, caret);
+        updatePreview();
+        showNotification(translations[currentLang]['style-applied'], 'success');
+        return;
+    }
+    const selection = value.slice(start, end);
+    const lines = selection.split('
+');
+    if (lines.some(hasInvalidMarkdownOrder)) {
+        showNotification(translations[currentLang]['markdown-order-warning'], 'warning');
+        return;
+    }
+    const allWrapped = lines.every(line => isLineWrappedWith(line, prefix, suffix));
+    if (containsProtectedSequence(selection) && !allWrapped) {
+        showNotification(translations[currentLang]['protected-warning'], 'warning');
+        return;
+    }
+    const transformed = lines.map(line => transformLineWithStyle(line, prefix, suffix, allWrapped)).join('
+');
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    editor.value = before + transformed + after;
+    const newEnd = start + transformed.length;
+    editor.focus();
+    editor.setSelectionRange(start, newEnd);
+    updatePreview();
+    showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function applyStructureStyle(style) {
+    const editor = document.getElementById('messageEditor');
+    const prefix = style.prefix || '';
+    const value = editor.value;
+    const originalStart = editor.selectionStart;
+    const originalEnd = editor.selectionEnd;
+    let start = originalStart;
+    let end = originalEnd;
+    if (start === end) {
+        const bounds = getLineBounds(value, start);
+        start = bounds.start;
+        end = bounds.end;
+    }
+    const selection = value.slice(start, end);
+    const lines = selection.split('
+');
+    const trimmedLines = lines.map(line => line.trimStart());
+    const allHavePrefix = trimmedLines.every(line => !line || line.startsWith(prefix));
+    if (containsProtectedSequence(selection) && !allHavePrefix) {
+        showNotification(translations[currentLang]['protected-warning'], 'warning');
+        return;
+    }
+    const transformedLines = lines.map(line => {
+        if (!line) {
+            return line;
+        }
+        const leading = line.slice(0, line.length - line.trimStart().length);
+        let trimmed = line.trimStart();
+        if (allHavePrefix) {
+            if (trimmed.startsWith(prefix)) {
+                trimmed = trimmed.slice(prefix.length);
+            }
+        } else if (trimmed && !trimmed.startsWith(prefix)) {
+            trimmed = `${prefix}${trimmed}`;
+        }
+        return leading + trimmed;
+    });
+    const newContent = transformedLines.join('
+');
+    const before = value.slice(0, start);
+    const after = value.slice(end);
+    editor.value = before + newContent + after;
+    if (originalStart === originalEnd) {
+        let caret = originalStart;
+        if (allHavePrefix) {
+            caret = Math.max(start, originalStart - prefix.length);
+        } else {
+            caret = originalStart + prefix.length;
+        }
+        editor.focus();
+        editor.setSelectionRange(caret, caret);
+    } else {
+        editor.focus();
+        editor.setSelectionRange(start, start + newContent.length);
+    }
+    updatePreview();
+    showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function applyBlockStyle(style) {
+    const editor = document.getElementById('messageEditor');
+    const prefix = style.prefix || '';
+    const suffix = style.suffix || '';
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start === end) {
         showNotification(translations[currentLang]['select-text'], 'warning');
         return;
     }
-    let converted = '';
-    if (data.special === 'zalgo') {
-        converted = addZalgo(selectedText);
-    } else if (data.special === 'aesthetic') {
-        converted = selectedText.split('').join(' ');
-    } else if (data.special === 'strikethrough') {
-        converted = selectedText.split('').map(char => char + '̶').join('');
-    } else {
-        converted = selectedText.split('').map(char => mapCharacter(char, data)).join('');
-        if (data.reverse) {
-            converted = converted.split('').reverse().join('');
-        }
+    const selection = editor.value.slice(start, end);
+    const isWrapped = selection.startsWith(prefix) && selection.endsWith(suffix);
+    if (containsProtectedSequence(selection) && !isWrapped) {
+        showNotification(translations[currentLang]['protected-warning'], 'warning');
+        return;
     }
-    const before = editor.value.substring(0, start);
-    const after = editor.value.substring(end);
-    editor.value = before + converted + after;
-    const newPos = start + converted.length;
+    const content = isWrapped ? selection.slice(prefix.length, selection.length - suffix.length) : `${prefix}${selection}${suffix}`;
+    const before = editor.value.slice(0, start);
+    const after = editor.value.slice(end);
+    editor.value = before + content + after;
+    const newEnd = start + content.length;
     editor.focus();
-    editor.setSelectionRange(newPos, newPos);
+    editor.setSelectionRange(start, newEnd);
     updatePreview();
     showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function applyFont(name, data) {
+    const editor = document.getElementById('messageEditor');
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start === end) {
+        showNotification(translations[currentLang]['select-text'], 'warning');
+        return;
+    }
+    const selection = editor.value.slice(start, end);
+    const { text: normalizedText, applied } = normalizeFontText(selection, data);
+    if (containsProtectedSequence(selection) && !applied) {
+        showNotification(translations[currentLang]['protected-warning'], 'warning');
+        return;
+    }
+    const result = applied ? normalizedText : transformWithFont(selection, data);
+    const before = editor.value.slice(0, start);
+    const after = editor.value.slice(end);
+    editor.value = before + result + after;
+    const newEnd = start + result.length;
+    editor.focus();
+    editor.setSelectionRange(start, newEnd);
+    updatePreview();
+    showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function containsProtectedSequence(text) {
+    return protectedPattern.test(text);
+}
+
+function hasInvalidMarkdownOrder(line) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+        return false;
+    }
+    const match = trimmed.match(/(#{1,3}\s|>{1,3}\s|[-*]\s|\d+\.\s)/);
+    if (!match) {
+        return false;
+    }
+    const index = trimmed.indexOf(match[0]);
+    if (index <= 0) {
+        return false;
+    }
+    const prefix = trimmed.slice(0, index);
+    return /(\*|_|~~|\|\|)/.test(prefix);
+}
+
+function splitStructureSegments(line) {
+    const leading = line.match(/^\s*/)?.[0] || '';
+    let remainder = line.slice(leading.length);
+    const structureParts = [];
+    const structureRegex = /^(#{1,3}\s|>{1,3}\s|[-*]\s|\d+\.\s)/;
+    let match = structureRegex.exec(remainder);
+    while (match) {
+        structureParts.push(match[0]);
+        remainder = remainder.slice(match[0].length);
+        match = structureRegex.exec(remainder);
+    }
+    return { leading, structure: structureParts.join(''), content: remainder };
+}
+
+function isLineWrappedWith(line, prefix, suffix) {
+    if (!prefix && !suffix) {
+        return false;
+    }
+    const { content } = splitStructureSegments(line);
+    return content.startsWith(prefix) && content.endsWith(suffix) && content.length >= prefix.length + suffix.length;
+}
+
+function transformLineWithStyle(line, prefix, suffix, remove) {
+    const segments = splitStructureSegments(line);
+    const content = segments.content;
+    if (!content) {
+        return line;
+    }
+    if (remove && content.startsWith(prefix) && content.endsWith(suffix)) {
+        const inner = content.slice(prefix.length, content.length - suffix.length);
+        return segments.leading + segments.structure + inner;
+    }
+    if (!remove && content.startsWith(prefix) && content.endsWith(suffix)) {
+        return line;
+    }
+    if (remove) {
+        return line;
+    }
+    return segments.leading + segments.structure + prefix + content + suffix;
+}
+
+function getLineBounds(text, index) {
+    const before = text.lastIndexOf('\n', index - 1);
+    const after = text.indexOf('\n', index);
+    return {
+        start: before === -1 ? 0 : before + 1,
+        end: after === -1 ? text.length : after
+    };
+}
+
+function transformFontSample(sample, data) {
+    return transformWithFont(sample, data);
+}
+
+function transformWithFont(text, data) {
+    if (!text) {
+        return text;
+    }
+    if (data.special === 'zalgo') {
+        return addZalgo(text);
+    }
+    if (data.special === 'aesthetic') {
+        return text.split('').join(' ');
+    }
+    if (data.special === 'strikethrough') {
+        return text.split('').map(char => char + '\u0336').join('');
+    }
+    let converted = text.split('').map(char => mapCharacter(char, data)).join('');
+    if (data.reverse) {
+        converted = converted.split('').reverse().join('');
+    }
+    return converted;
+}
+
+function normalizeFontText(text, data) {
+    if (!text) {
+        return { text, applied: false };
+    }
+    if (data.special === 'zalgo') {
+        const cleaned = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+        return { text: cleaned, applied: cleaned.length !== text.length };
+    }
+    if (data.special === 'aesthetic') {
+        const applied = /\S\s\S/.test(text);
+        const normalized = text.replace(/\s+/g, spaces => {
+            if (spaces.length === 1) {
+                return '';
+            }
+            const original = Math.max(spaces.length - 2, 1);
+            return ' '.repeat(original);
+        });
+        return { text: normalized, applied };
+    }
+    if (data.special === 'strikethrough') {
+        const applied = text.includes('\u0336');
+        return { text: text.replace(/\u0336/g, ''), applied };
+    }
+    let working = text;
+    if (data.reverse) {
+        working = working.split('').reverse().join('');
+    }
+    let applied = false;
+    let restored;
+    if (data.map) {
+        const reverseMap = data._reverseMap || (data._reverseMap = Object.fromEntries(Object.entries(data.map).map(([key, value]) => [value, key])));
+        restored = working.split('').map(char => {
+            if (reverseMap[char]) {
+                applied = true;
+                return reverseMap[char];
+            }
+            return char;
+        }).join('');
+    } else {
+        restored = working.split('').map(char => {
+            const base = reverseMapCharacter(char, data);
+            if (base !== char) {
+                applied = true;
+            }
+            return base;
+        }).join('');
+    }
+    if (!applied) {
+        return { text, applied: false };
+    }
+    return { text: restored, applied: true };
+}
+
+function reverseMapCharacter(char, data) {
+    const code = char.codePointAt(0);
+    if (data.offsetLower !== undefined && code >= data.offsetLower && code < data.offsetLower + 26) {
+        return String.fromCodePoint(97 + (code - data.offsetLower));
+    }
+    if (data.offsetUpper !== undefined && code >= data.offsetUpper && code < data.offsetUpper + 26) {
+        return String.fromCodePoint(65 + (code - data.offsetUpper));
+    }
+    if (data.offsetNumber !== undefined && code >= data.offsetNumber && code < data.offsetNumber + 10) {
+        return String.fromCodePoint(48 + (code - data.offsetNumber));
+    }
+    return char;
 }
 
 function mapCharacter(char, data) {
@@ -485,9 +877,6 @@ function updatePreview() {
     processed = processed.replace(/^>>> (.+)$/gm, '<blockquote>$1</blockquote>');
     processed = processed.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
     processed = processed.replace(/^- (.+)$/gm, '<div class="list-item">• $1</div>');
-    processed = processed.replace(/<#(\d+)>/g, '<span style="color:var(--accent);">#channel</span>');
-    processed = processed.replace(/<@&(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 4px;border-radius:4px;">@role</span>');
-    processed = processed.replace(/<@(\d+)>/g, '<span style="color:var(--accent);background:var(--bg-hover);padding:0 4px;border-radius:4px;">@user</span>');
     processed = processed.replace(/\n/g, '<br>');
     codeBlocks.forEach((block, index) => {
         processed = processed.replace(`__CODEBLOCK_${index}__`, block);
