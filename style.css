@@ -62,30 +62,33 @@ body {
 header {
     background: linear-gradient(135deg, var(--accent), var(--accent-hover));
     padding: 12px 20px;
-    text-align: center;
-    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 header h1 {
     font-size: 2em;
     color: #fff;
     letter-spacing: 0.15em;
-    margin-bottom: 4px;
+    margin: 0;
 }
 
 header p {
     color: rgba(255, 255, 255, 0.9);
     font-size: 1em;
+    flex: 1;
+    text-align: center;
+    margin: 0;
 }
 
 /* CONTROLS */
 .controls {
-    position: absolute;
-    top: 20px;
-    right: 20px;
     display: flex;
     gap: 10px;
     align-items: center;
+    margin-left: auto;
 }
 
 .control-btn {
@@ -122,6 +125,7 @@ header p {
 .column {
     background: var(--bg-secondary);
     border-radius: 18px;
+    border: 1px solid var(--border);
     padding: 26px;
     box-shadow: 0 18px 40px var(--shadow);
     display: flex;
@@ -326,6 +330,16 @@ header p {
 .style-btn:hover::after,
 .style-btn:focus-visible::after {
     border-color: var(--accent);
+}
+
+.style-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.style-btn.active .style-caption {
+    color: rgba(255, 255, 255, 0.85);
 }
 
 .style-preview {
@@ -578,30 +592,25 @@ footer a:hover {
     color: var(--text-secondary);
 }
 
-@media (min-width: 1201px) {
-    .column {
-        max-height: calc(100vh - 180px);
-        overflow-y: auto;
-    }
-}
-
 /* RESPONSIVE */
 @media (max-width: 1200px) {
     .main-container {
         grid-template-columns: 1fr;
-        grid-template-areas: "emoji" "editor" "styles";
+        grid-template-areas:
+            "emoji"
+            "editor"
+            "styles";
         gap: 20px;
     }
 
     .controls {
-        position: relative;
-        top: auto;
-        right: auto;
         justify-content: center;
-        margin-top: 15px;
+        margin-top: 10px;
+        margin-left: 0;
     }
 
     .column {
+        max-height: none;
         overflow: visible;
         max-height: none;
     }
@@ -609,7 +618,7 @@ footer a:hover {
 
 @media (max-width: 768px) {
     header {
-        padding: 20px 15px 70px;
+        padding: 12px 16px;
     }
 
     .main-container {
@@ -625,6 +634,7 @@ footer a:hover {
         align-items: stretch;
         width: 100%;
         gap: 8px;
+        margin-left: 0;
     }
 
     .control-btn {
