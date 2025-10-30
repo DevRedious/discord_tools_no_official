@@ -612,6 +612,7 @@ footer a:hover {
     .column {
         max-height: none;
         overflow: visible;
+        max-height: none;
     }
 }
 

@@ -954,6 +954,193 @@ function reverseMapCharacter(char, data) {
     return char;
 }
 
+function applyFont(name, data) {
+    const editor = document.getElementById('messageEditor');
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start === end) {
+        showNotification(translations[currentLang]['select-text'], 'warning');
+        return;
+    }
+    const selection = editor.value.slice(start, end);
+    const { text: normalizedText, applied } = normalizeFontText(selection, data);
+    if (containsProtectedSequence(selection) && !applied) {
+        showNotification(translations[currentLang]['protected-warning'], 'warning');
+        return;
+    }
+    const result = applied ? normalizedText : transformWithFont(selection, data);
+    const before = editor.value.slice(0, start);
+    const after = editor.value.slice(end);
+    editor.value = before + result + after;
+    const newEnd = start + result.length;
+    editor.focus();
+    editor.setSelectionRange(start, newEnd);
+    updatePreview();
+    showNotification(translations[currentLang]['style-applied'], 'success');
+}
+
+function containsProtectedSequence(text) {
+    return protectedPattern.test(text);
+}
+
+function hasInvalidMarkdownOrder(line) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+        return false;
+    }
+    const match = trimmed.match(/(#{1,3}\s|>{1,3}\s|[-*]\s|\d+\.\s)/);
+    if (!match) {
+        return false;
+    }
+    const index = trimmed.indexOf(match[0]);
+    if (index <= 0) {
+        return false;
+    }
+    const prefix = trimmed.slice(0, index);
+    return /(\*|_|~~|\|\|)/.test(prefix);
+}
+
+function splitStructureSegments(line) {
+    const leading = line.match(/^\s*/)?.[0] || '';
+    let remainder = line.slice(leading.length);
+    const structureParts = [];
+    const structureRegex = /^(#{1,3}\s|>{1,3}\s|[-*]\s|\d+\.\s)/;
+    let match = structureRegex.exec(remainder);
+    while (match) {
+        structureParts.push(match[0]);
+        remainder = remainder.slice(match[0].length);
+        match = structureRegex.exec(remainder);
+    }
+    return { leading, structure: structureParts.join(''), content: remainder };
+}
+
+function isLineWrappedWith(line, prefix, suffix) {
+    if (!prefix && !suffix) {
+        return false;
+    }
+    const { content } = splitStructureSegments(line);
+    return content.startsWith(prefix) && content.endsWith(suffix) && content.length >= prefix.length + suffix.length;
+}
+
+function transformLineWithStyle(line, prefix, suffix, remove) {
+    const segments = splitStructureSegments(line);
+    const content = segments.content;
+    if (!content) {
+        return line;
+    }
+    if (remove && content.startsWith(prefix) && content.endsWith(suffix)) {
+        const inner = content.slice(prefix.length, content.length - suffix.length);
+        return segments.leading + segments.structure + inner;
+    }
+    if (!remove && content.startsWith(prefix) && content.endsWith(suffix)) {
+        return line;
+    }
+    if (remove) {
+        return line;
+    }
+    return segments.leading + segments.structure + prefix + content + suffix;
+}
+
+function getLineBounds(text, index) {
+    const before = text.lastIndexOf('\n', index - 1);
+    const after = text.indexOf('\n', index);
+    return {
+        start: before === -1 ? 0 : before + 1,
+        end: after === -1 ? text.length : after
+    };
+}
+
+function transformFontSample(sample, data) {
+    return transformWithFont(sample, data);
+}
+
+function transformWithFont(text, data) {
+    if (!text) {
+        return text;
+    }
+    if (data.special === 'zalgo') {
+        return addZalgo(text);
+    }
+    if (data.special === 'aesthetic') {
+        return text.split('').join(' ');
+    }
+    if (data.special === 'strikethrough') {
+        return text.split('').map(char => char + '\u0336').join('');
+    }
+    let converted = text.split('').map(char => mapCharacter(char, data)).join('');
+    if (data.reverse) {
+        converted = converted.split('').reverse().join('');
+    }
+    return converted;
+}
+
+function normalizeFontText(text, data) {
+    if (!text) {
+        return { text, applied: false };
+    }
+    if (data.special === 'zalgo') {
+        const cleaned = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+        return { text: cleaned, applied: cleaned.length !== text.length };
+    }
+    if (data.special === 'aesthetic') {
+        const applied = /\S\s\S/.test(text);
+        const normalized = text.replace(/\s+/g, spaces => {
+            if (spaces.length === 1) {
+                return '';
+            }
+            const original = Math.max(spaces.length - 2, 1);
+            return ' '.repeat(original);
+        });
+        return { text: normalized, applied };
+    }
+    if (data.special === 'strikethrough') {
+        const applied = text.includes('\u0336');
+        return { text: text.replace(/\u0336/g, ''), applied };
+    }
+    let working = text;
+    if (data.reverse) {
+        working = working.split('').reverse().join('');
+    }
+    let applied = false;
+    let restored;
+    if (data.map) {
+        const reverseMap = data._reverseMap || (data._reverseMap = Object.fromEntries(Object.entries(data.map).map(([key, value]) => [value, key])));
+        restored = working.split('').map(char => {
+            if (reverseMap[char]) {
+                applied = true;
+                return reverseMap[char];
+            }
+            return char;
+        }).join('');
+    } else {
+        restored = working.split('').map(char => {
+            const base = reverseMapCharacter(char, data);
+            if (base !== char) {
+                applied = true;
+            }
+            return base;
+        }).join('');
+    }
+    if (!applied) {
+        return { text, applied: false };
+    }
+    return { text: restored, applied: true };
+}
+
+function reverseMapCharacter(char, data) {
+    const code = char.codePointAt(0);
+    if (data.offsetLower !== undefined && code >= data.offsetLower && code < data.offsetLower + 26) {
+        return String.fromCodePoint(97 + (code - data.offsetLower));
+    }
+    if (data.offsetUpper !== undefined && code >= data.offsetUpper && code < data.offsetUpper + 26) {
+        return String.fromCodePoint(65 + (code - data.offsetUpper));
+    }
+    if (data.offsetNumber !== undefined && code >= data.offsetNumber && code < data.offsetNumber + 10) {
+        return String.fromCodePoint(48 + (code - data.offsetNumber));
+    }
+    return char;
+}
+
 function mapCharacter(char, data) {
     const lower = char.toLowerCase();
     if (data.map && data.map[lower]) {
