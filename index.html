@@ -70,6 +70,34 @@
                 <div class="section-header" id="textEditorTitle">Zone de Texte</div>
                 <textarea id="messageEditor" class="message-editor" placeholder="Tapez votre message ici..."></textarea>
 
+                <div class="editor-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Standard</span>
+                        <span id="charCount" class="stat-value">0</span><span class="stat-total">/2000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Nitro</span>
+                        <span id="charCountNitro" class="stat-value">0</span><span class="stat-total">/4000</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Lignes</span>
+                        <span id="lineCount" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <div class="templates-panel">
+                    <div class="templates-header">
+                        <span>Modèles rapides</span>
+                        <select id="templateSelect" class="template-select">
+                            <option value="">Choisir un modèle…</option>
+                        </select>
+                    </div>
+                    <div class="templates-actions">
+                        <button type="button" id="applyTemplateBtn" class="template-btn">Insérer</button>
+                        <button type="button" id="clearTemplateBtn" class="template-btn secondary">Effacer</button>
+                    </div>
+                </div>
+
                 <div class="button-group">
                     <button type="button" class="copy-btn">
                         <span id="copyBtnText">Copier le message</span>
@@ -80,7 +108,47 @@
                 </div>
 
                 <div class="section-header" id="previewTitle">Aperçu Discord</div>
-                <div id="messagePreview" class="preview-box">Votre aperçu apparaîtra ici...</div>
+                <div class="preview-grid">
+                    <div class="preview-card">
+                        <div class="preview-card-header">Markdown</div>
+                        <div id="messagePreview" class="preview-box">Votre aperçu apparaîtra ici...</div>
+                    </div>
+                    <div class="preview-card">
+                        <div class="preview-card-header">Discord</div>
+                        <div id="discordPreview" class="preview-box discord-style">
+                            <div class="discord-preview-header">
+                                <div class="discord-avatar"></div>
+                                <div>
+                                    <div class="discord-name">Markify Bot</div>
+                                    <div class="discord-meta">Aujourd'hui à 12:00</div>
+                                </div>
+                            </div>
+                            <div id="discordPreviewContent" class="discord-preview-content">Votre aperçu apparaîtra ici...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">Générateur d'Embed</div>
+                <div class="embed-builder">
+                    <div class="embed-field">
+                        <label for="embedTitle">Titre</label>
+                        <input type="text" id="embedTitle" maxlength="256" placeholder="Titre de l'embed (max 256 caractères)">
+                    </div>
+                    <div class="embed-field">
+                        <label for="embedDescription">Description</label>
+                        <textarea id="embedDescription" maxlength="4096" placeholder="Description (max 4096 caractères)"></textarea>
+                    </div>
+                    <div class="embed-field color-field">
+                        <label for="embedColor">Couleur</label>
+                        <input type="color" id="embedColor" value="#ff3030">
+                        <input type="text" id="embedColorHex" value="#ff3030" maxlength="7">
+                    </div>
+                    <div class="embed-actions">
+                        <button type="button" id="copyEmbedBtn" class="template-btn">Copier le JSON</button>
+                        <span id="embedStatus" class="embed-status"></span>
+                    </div>
+                    <pre id="embedOutput" class="embed-output">{}</pre>
+                </div>
             </div>
         </section>
 

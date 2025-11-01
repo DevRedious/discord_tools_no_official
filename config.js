@@ -131,7 +131,7 @@ export const unicodeFonts = {
     'Strikethrough': { special: 'strikethrough' }
 };
 
-export const protectedPattern = /(\[[^\]]+\]\(https?:\/\/[^)]+\)|<#[0-9]+>|<@&[0-9]+>|<@[0-9]+>)/;
+export const protectedPattern = /(\[[^\]]+\]\(https?:\/\/[^)]+\)|<#[0-9]+>|<@&[0-9]+>|<@[0-9]+>|<a?:[a-zA-Z0-9_]+:[0-9]+>)/;
 
 // UI collections shared across modules
 export const markdownButtons = new Map();
