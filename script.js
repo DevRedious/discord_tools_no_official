@@ -138,7 +138,7 @@ function applyMarkdownStyle(styleId) {
     if (!style) {
         return;
     }
-    let result = { applied: false, active: false };
+    let result = { applied: false, active: null };
     if (style.type === 'structure') {
         result = applyStructureStyle(style);
     } else if (style.type === 'block') {
@@ -146,7 +146,7 @@ function applyMarkdownStyle(styleId) {
     } else {
         result = applyInlineStyle(style);
     }
-    if (style.type === 'style' && result.applied) {
+    if (result.applied && typeof result.active === 'boolean') {
         if (result.active) {
             activeMarkdownStyles.add(style.id);
         } else {
@@ -272,17 +272,17 @@ function applyInlineStyle(style) {
     const selection = value.slice(start, end);
     const lines = selection.split('\n');
     if (lines.some(hasInvalidMarkdownOrder)) {
-    showNotification(t('markdown-order-warning'), 'warning');
+        showNotification(t('markdown-order-warning'), 'warning');
         return { applied: false, active: false };
     }
     const allWrapped = lines.every(line => isLineWrappedWith(line, prefix, suffix));
-    if (containsProtectedSequence(selection) && !allWrapped) {
-    showNotification(t('protected-warning'), 'warning');
-        return { applied: false, active: false };
-    }
     const transformed = lines.map(line => transformLineWithStyle(line, prefix, suffix, allWrapped)).join('\n');
     const before = value.slice(0, start);
     const after = value.slice(end);
+    if (!allWrapped && transformed === selection) {
+        showNotification(t('protected-warning'), 'warning');
+        return { applied: false, active: false };
+    }
     editor.value = before + transformed + after;
     const newEnd = start + transformed.length;
     editor.focus();
@@ -299,21 +299,36 @@ function applyStructureStyle(style) {
     const value = editor.value;
     const originalStart = editor.selectionStart;
     const originalEnd = editor.selectionEnd;
+    if (originalStart === originalEnd) {
+        const bounds = getLineBounds(value, originalStart);
+        const line = value.slice(bounds.start, bounds.end);
+        const leading = line.match(/^\s*/)?.[0] || '';
+        let content = line.slice(leading.length);
+        const hasPrefix = content.startsWith(prefix);
+        if (hasPrefix) {
+            content = content.slice(prefix.length);
+        } else {
+            content = `${prefix}${content}`;
+        }
+        const newLine = leading + content;
+        const before = value.slice(0, bounds.start);
+        const after = value.slice(bounds.end);
+        editor.value = before + newLine + after;
+        const caretBase = bounds.start + leading.length;
+        const caret = hasPrefix ? caretBase : caretBase + prefix.length;
+        editor.focus();
+        editor.setSelectionRange(caret, caret);
+        state.lastEditorValue = editor.value;
+        updatePreview();
+        showNotification(t('style-applied'), 'success');
+        return { applied: true, active: !hasPrefix };
+    }
     let start = originalStart;
     let end = originalEnd;
-    if (start === end) {
-        const bounds = getLineBounds(value, start);
-        start = bounds.start;
-        end = bounds.end;
-    }
     const selection = value.slice(start, end);
     const lines = selection.split('\n');
     const trimmedLines = lines.map(line => line.trimStart());
     const allHavePrefix = trimmedLines.every(line => !line || line.startsWith(prefix));
-    if (containsProtectedSequence(selection) && !allHavePrefix) {
-    showNotification(t('protected-warning'), 'warning');
-        return { applied: false, active: false };
-    }
     const transformedLines = lines.map(line => {
         if (!line) {
             return line;
@@ -330,26 +345,19 @@ function applyStructureStyle(style) {
         return leading + trimmed;
     });
     const newContent = transformedLines.join('\n');
+    if (newContent === selection) {
+        showNotification(t('protected-warning'), 'warning');
+        return { applied: false, active: null };
+    }
     const before = value.slice(0, start);
     const after = value.slice(end);
     editor.value = before + newContent + after;
-    if (originalStart === originalEnd) {
-        let caret = originalStart;
-        if (allHavePrefix) {
-            caret = Math.max(start, originalStart - prefix.length);
-        } else {
-            caret = originalStart + prefix.length;
-        }
-        editor.focus();
-        editor.setSelectionRange(caret, caret);
-    } else {
-        editor.focus();
-        editor.setSelectionRange(start, start + newContent.length);
-    }
+    editor.focus();
+    editor.setSelectionRange(start, start + newContent.length);
     state.lastEditorValue = editor.value;
     updatePreview();
     showNotification(t('style-applied'), 'success');
-    return { applied: true, active: false };
+    return { applied: true, active: null };
 }
 
 function applyBlockStyle(style) {
@@ -364,11 +372,11 @@ function applyBlockStyle(style) {
     }
     const selection = editor.value.slice(start, end);
     const isWrapped = selection.startsWith(prefix) && selection.endsWith(suffix);
-    if (containsProtectedSequence(selection) && !isWrapped) {
-    showNotification(t('protected-warning'), 'warning');
-        return { applied: false, active: false };
-    }
     const content = isWrapped ? selection.slice(prefix.length, selection.length - suffix.length) : `${prefix}${selection}${suffix}`;
+    if (content === selection) {
+        showNotification(t('protected-warning'), 'warning');
+        return { applied: false, active: null };
+    }
     const before = editor.value.slice(0, start);
     const after = editor.value.slice(end);
     editor.value = before + content + after;
@@ -378,7 +386,7 @@ function applyBlockStyle(style) {
     state.lastEditorValue = editor.value;
     updatePreview();
     showNotification(t('style-applied'), 'success');
-    return { applied: true, active: false };
+    return { applied: true, active: null };
 }
 
 function applyUnicodeStyle(name) {
@@ -492,13 +500,64 @@ function transformLineWithStyle(line, prefix, suffix, remove) {
         const inner = content.slice(prefix.length, content.length - suffix.length);
         return segments.leading + segments.structure + inner;
     }
-    if (!remove && content.startsWith(prefix) && content.endsWith(suffix)) {
-        return line;
-    }
     if (remove) {
         return line;
     }
-    return segments.leading + segments.structure + prefix + content + suffix;
+    if (content.startsWith(prefix) && content.endsWith(suffix)) {
+        return line;
+    }
+    const styled = applyStyleExcludingProtected(content, prefix, suffix);
+    return segments.leading + segments.structure + styled;
+}
+
+function applyStyleExcludingProtected(content, prefix, suffix) {
+    const matches = [...content.matchAll(new RegExp(protectedPattern.source, 'g'))];
+    if (!matches.length) {
+        return wrapSegmentWithStyle(content, prefix, suffix);
+    }
+    const parts = [];
+    let lastIndex = 0;
+    let changed = false;
+    matches.forEach(match => {
+        if (match.index > lastIndex) {
+            const segment = content.slice(lastIndex, match.index);
+            const styled = wrapSegmentWithStyle(segment, prefix, suffix);
+            if (styled !== segment) {
+                changed = true;
+            }
+            parts.push(styled);
+        }
+        parts.push(match[0]);
+        lastIndex = match.index + match[0].length;
+    });
+    if (lastIndex < content.length) {
+        const segment = content.slice(lastIndex);
+        const styled = wrapSegmentWithStyle(segment, prefix, suffix);
+        if (styled !== segment) {
+            changed = true;
+        }
+        parts.push(styled);
+    }
+    if (!changed) {
+        return content;
+    }
+    return parts.join('');
+}
+
+function wrapSegmentWithStyle(segment, prefix, suffix) {
+    if (!segment.trim()) {
+        return segment;
+    }
+    const leading = segment.match(/^\s*/)?.[0] || '';
+    const trailing = segment.match(/\s*$/)?.[0] || '';
+    const core = segment.slice(leading.length, segment.length - trailing.length);
+    if (!core) {
+        return segment;
+    }
+    if (core.startsWith(prefix) && core.endsWith(suffix)) {
+        return segment;
+    }
+    return `${leading}${prefix}${core}${suffix}${trailing}`;
 }
 
 function getLineBounds(text, index) {
