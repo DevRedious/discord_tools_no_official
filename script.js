@@ -9,23 +9,7 @@ const autoContinueExitOnEmpty = new Set(['list', 'quote', 'multiline-quote']);
 const DISCORD_LIMIT = 2000;
 const DISCORD_LIMIT_NITRO = 4000;
 
-const templates = [
-    {
-        id: 'event-wrap-up',
-        label: 'Annonce fin d\'événement',
-        content: `# Fin de l’événement 🎉\n\n- Merci à toutes et tous pour votre participation.\n- Vos retours nous aideront à améliorer les prochains rendez-vous.\n\n## Donner votre avis ?\n- Un formulaire est disponible pour partager vos impressions.\n\n## À très bientôt\n- D'autres surprises arrivent très vite !`
-    },
-    {
-        id: 'maintenance',
-        label: 'Annonce maintenance',
-        content: `# 🛠️ Maintenance programmée\n\n> 📅 Date : <t:1700000000:f>\n> ⏱️ Durée estimée : 30 minutes\n\nPendant cette période :\n- Les services seront indisponibles.\n- Le suivi sera communiqué en direct sur <#000000000000000000>.\n\nMerci de votre compréhension !`
-    },
-    {
-        id: 'recruitment',
-        label: 'Annonce recrutement staff',
-        content: `# 👥 Recrutement Ouvert\n\nNous cherchons des modérateurs et animatrices/animateurs pour renforcer l'équipe.\n\n**Profil recherché**\n- Disponible au minimum 4h/semaine\n- À l'aise avec les outils Discord et Markify\n- Bon relationnel\n\n**Comment postuler ?**\nRemplissez ce formulaire : <https://forms.gle/example>\n\nNous reviendrons vers vous rapidement !`
-    }
-];
+
 
 // Translation helper with fallback to English then key
 function t(key) {
@@ -51,35 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (preview) {
         preview.addEventListener('click', handlePreviewClick);
     }
-    const discordPreview = document.getElementById('discordPreviewContent');
-    if (discordPreview) {
-        discordPreview.addEventListener('click', handlePreviewClick);
-    }
-
-    const applyTemplateBtn = document.getElementById('applyTemplateBtn');
-    if (applyTemplateBtn) {
-        applyTemplateBtn.addEventListener('click', applySelectedTemplate);
-    }
-    const clearTemplateBtn = document.getElementById('clearTemplateBtn');
-    if (clearTemplateBtn) {
-        clearTemplateBtn.addEventListener('click', clearTemplateSelection);
-    }
-    const templateSelect = document.getElementById('templateSelect');
-    if (templateSelect) {
-        templateSelect.addEventListener('change', () => {
-            const status = document.getElementById('embedStatus');
-            if (status && status.dataset.locked !== 'true') {
-                status.textContent = '';
-                status.classList.remove('success', 'error');
-            }
-        });
-    }
 
     initEmojis();
     updateTranslations();
     updatePreview();
-    populateTemplates();
-    initializeEmbedBuilder();
     updateMessageStats();
 
     document.addEventListener('markify:emoji-inserted', handleEmojiInserted);
@@ -396,156 +355,6 @@ function applyLimitClass(element, length, limit) {
     } else if (length >= warningThreshold) {
         element.classList.add('limit-warning');
     }
-}
-
-function populateTemplates() {
-    const select = document.getElementById('templateSelect');
-    if (!select) {
-        return;
-    }
-    templates.forEach(template => {
-        const option = document.createElement('option');
-        option.value = template.id;
-        option.textContent = template.label;
-        select.appendChild(option);
-    });
-}
-
-function applySelectedTemplate() {
-    const select = document.getElementById('templateSelect');
-    if (!select || !select.value) {
-        showNotification(t('select-text'), 'warning');
-        return;
-    }
-    const template = templates.find(item => item.id === select.value);
-    if (!template) {
-        return;
-    }
-    insertTemplateContent(template.content);
-}
-
-function clearTemplateSelection() {
-    const select = document.getElementById('templateSelect');
-    if (select) {
-        select.value = '';
-    }
-}
-
-function insertTemplateContent(content) {
-    const editor = document.getElementById('messageEditor');
-    if (!editor) {
-        return;
-    }
-    const start = editor.selectionStart || 0;
-    const end = editor.selectionEnd || 0;
-    const before = editor.value.slice(0, start);
-    const after = editor.value.slice(end);
-    const insertion = content.trimStart();
-    const needsBreak = before && !before.endsWith('\n\n') ? '\n\n' : '';
-    const newValue = `${before}${needsBreak}${insertion}\n\n${after}`.replace(/\n{3,}/g, '\n\n');
-    editor.value = newValue;
-    const newCaret = before.length + needsBreak.length + insertion.length + 2;
-    editor.setSelectionRange(newCaret, newCaret);
-    state.lastEditorValue = editor.value;
-    updatePreview();
-    showNotification(t('style-applied'), 'success');
-}
-
-function initializeEmbedBuilder() {
-    const title = document.getElementById('embedTitle');
-    const description = document.getElementById('embedDescription');
-    const colorPicker = document.getElementById('embedColor');
-    const colorHex = document.getElementById('embedColorHex');
-    const copyBtn = document.getElementById('copyEmbedBtn');
-    if (!title || !description || !colorPicker || !colorHex) {
-        return;
-    }
-    const handler = () => refreshEmbedOutput();
-    title.addEventListener('input', handler);
-    description.addEventListener('input', handler);
-    colorPicker.addEventListener('input', () => {
-        colorHex.value = colorPicker.value.toUpperCase();
-        refreshEmbedOutput();
-    });
-    colorHex.addEventListener('input', () => {
-        const sanitized = sanitizeHexColor(colorHex.value);
-        if (sanitized) {
-            colorHex.value = sanitized;
-            colorPicker.value = sanitized;
-        }
-        refreshEmbedOutput();
-    });
-    if (copyBtn) {
-        copyBtn.addEventListener('click', copyEmbedJson);
-    }
-    refreshEmbedOutput();
-}
-
-function refreshEmbedOutput() {
-    const titleEl = document.getElementById('embedTitle');
-    const descriptionEl = document.getElementById('embedDescription');
-    const colorHexEl = document.getElementById('embedColorHex');
-    const outputEl = document.getElementById('embedOutput');
-    const statusEl = document.getElementById('embedStatus');
-    if (!titleEl || !descriptionEl || !colorHexEl || !outputEl || !statusEl) {
-        return;
-    }
-    const title = titleEl.value.trim();
-    const description = descriptionEl.value.trim();
-    const hexColor = sanitizeHexColor(colorHexEl.value) || '#FF3030';
-    colorHexEl.value = hexColor;
-    const colorPicker = document.getElementById('embedColor');
-    if (colorPicker && colorPicker.value.toUpperCase() !== hexColor) {
-        colorPicker.value = hexColor.toLowerCase();
-    }
-    const color = parseInt(hexColor.replace('#', ''), 16);
-    const embed = {
-        content: '',
-        embeds: [
-            {
-                title: title || undefined,
-                description: description || undefined,
-                color
-            }
-        ]
-    };
-    outputEl.textContent = JSON.stringify(embed, null, 2);
-    statusEl.textContent = `Titre ${title.length}/256 • Description ${description.length}/4096`;
-    const withinLimits = title.length <= 256 && description.length <= 4096;
-    statusEl.classList.toggle('success', withinLimits);
-    statusEl.classList.toggle('error', !withinLimits);
-}
-
-async function copyEmbedJson() {
-    const outputEl = document.getElementById('embedOutput');
-    const statusEl = document.getElementById('embedStatus');
-    if (!outputEl || !statusEl) {
-        return;
-    }
-    try {
-        await navigator.clipboard.writeText(outputEl.textContent);
-        statusEl.textContent = 'JSON copié dans le presse-papiers.';
-        statusEl.classList.add('success');
-        statusEl.classList.remove('error');
-    } catch (error) {
-        statusEl.textContent = 'Impossible de copier le JSON.';
-        statusEl.classList.add('error');
-        statusEl.classList.remove('success');
-    }
-}
-
-function sanitizeHexColor(value) {
-    if (!value) {
-        return null;
-    }
-    let hex = value.trim().toUpperCase();
-    if (!hex.startsWith('#')) {
-        hex = `#${hex}`;
-    }
-    if (/^#[0-9A-F]{6}$/i.test(hex)) {
-        return hex;
-    }
-    return null;
 }
 
 function generateUnicodeButtons() {
@@ -1116,7 +925,6 @@ function addZalgo(text) {
 function updatePreview() {
     const editor = document.getElementById('messageEditor');
     const preview = document.getElementById('messagePreview');
-    const discordPreview = document.getElementById('discordPreviewContent');
     if (!editor || !preview) {
         return;
     }
@@ -1124,16 +932,10 @@ function updatePreview() {
     updateMessageStats();
     if (!textValue.trim()) {
         preview.textContent = t('preview-placeholder') || '';
-        if (discordPreview) {
-            discordPreview.textContent = t('preview-placeholder') || '';
-        }
         return;
     }
     const markup = renderPreviewMarkup(textValue);
     preview.innerHTML = markup;
-    if (discordPreview) {
-        discordPreview.innerHTML = markup;
-    }
 }
 
 function escapeHTML(str) {
