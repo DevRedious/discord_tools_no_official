@@ -11,8 +11,8 @@
         <h1>MARKIFY</h1>
         <p id="subtitle">Éditeur de messages et émojis pour Discord</p>
         <div class="controls">
-            <button class="control-btn" id="langBtn" onclick="toggleLanguage()">FR</button>
-            <button class="control-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+            <button class="control-btn" id="langBtn">FR</button>
+            <button class="control-btn" id="themeBtn">🌙</button>
         </div>
     </header>
 
@@ -54,10 +54,10 @@
                 <textarea id="messageEditor" class="message-editor" placeholder="Tapez votre message ici..."></textarea>
 
                 <div class="button-group">
-                    <button type="button" class="copy-btn" onclick="copyMessage()">
+                    <button type="button" class="copy-btn">
                         <span id="copyBtnText">Copier le message</span>
                     </button>
-                    <button type="button" class="reset-btn" onclick="resetEditor()">
+                    <button type="button" class="reset-btn">
                         <span id="resetBtnText">Réinitialiser</span>
                     </button>
                 </div>
@@ -98,6 +98,6 @@
 
     <div id="notification" class="notification"></div>
 
-    <script src="script.js"></script>
+    <script src="script.js" type="module"></script>
 </body>
 </html>

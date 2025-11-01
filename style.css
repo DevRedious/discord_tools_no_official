@@ -576,14 +576,14 @@ footer a:hover {
     color: var(--text-secondary);
 }
 
-.preview-box .spoiler {
+.preview-box .preview-spoiler {
     background: var(--text-secondary);
     color: transparent;
     border-radius: 4px;
     padding: 0 4px;
 }
 
-.preview-box .spoiler.revealed {
+.preview-box .preview-spoiler.revealed {
     color: inherit;
 }
 
