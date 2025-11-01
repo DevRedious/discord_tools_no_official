@@ -3,6 +3,10 @@ import { translations } from './translations.js';
 import { initEmojis, searchEmojis } from './emoji.js';
 import { markdownStyles, unicodeFonts, protectedPattern, markdownButtons, unicodeButtons, activeMarkdownStyles, state } from './config.js';
 
+const headingStyleIds = new Set(['heading1', 'heading2', 'heading3']);
+const autoContinueStyleIds = ['list', 'quote', 'multiline-quote', ...headingStyleIds];
+const autoContinueExitOnEmpty = new Set(['list', 'quote', 'multiline-quote']);
+
 // Translation helper with fallback to English then key
 function t(key) {
     const langPack = translations[state.currentLang] || {};
@@ -19,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('messageEditor');
     if (editor) {
         editor.addEventListener('input', handleEditorInput);
+        editor.addEventListener('keydown', handleEditorKeydown);
         state.lastEditorValue = editor.value;
     }
 
@@ -148,6 +153,13 @@ function applyMarkdownStyle(styleId) {
     }
     if (result.applied && typeof result.active === 'boolean') {
         if (result.active) {
+            if (headingStyleIds.has(style.id)) {
+                headingStyleIds.forEach(id => {
+                    if (id !== style.id) {
+                        activeMarkdownStyles.delete(id);
+                    }
+                });
+            }
             activeMarkdownStyles.add(style.id);
         } else {
             activeMarkdownStyles.delete(style.id);
@@ -214,6 +226,78 @@ function handleEditorInput(event) {
     }
     state.lastEditorValue = editor.value;
     updatePreview();
+}
+
+function handleEditorKeydown(event) {
+    if (event.key !== 'Enter' || event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) {
+        return;
+    }
+    const editor = event.target;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start !== end) {
+        return;
+    }
+    const value = editor.value;
+    const bounds = getLineBounds(value, start);
+    const lineText = value.slice(bounds.start, bounds.end);
+    const cursorInLine = start - bounds.start;
+    const leadingMatch = lineText.match(/^\s*/);
+    const leading = leadingMatch ? leadingMatch[0] : '';
+    const afterLeading = lineText.slice(leading.length);
+    if (!afterLeading) {
+        return;
+    }
+    for (const id of autoContinueStyleIds) {
+        const style = getMarkdownStyleById(id);
+        if (!style || !style.prefix) {
+            continue;
+        }
+        const prefix = style.prefix;
+        if (!afterLeading.startsWith(prefix)) {
+            continue;
+        }
+        const prefixStart = leading.length;
+        const prefixEnd = prefixStart + prefix.length;
+        if (cursorInLine < prefixEnd) {
+            continue;
+        }
+        const contentAfterPrefix = lineText.slice(prefixEnd).trim();
+        const restAfterCursor = lineText.slice(cursorInLine).trim();
+        event.preventDefault();
+        if (autoContinueExitOnEmpty.has(id) && !contentAfterPrefix && !restAfterCursor) {
+            const beforeLine = value.slice(0, bounds.start);
+            const afterLine = value.slice(bounds.end);
+            const newLineText = leading;
+            let updatedValue = beforeLine + newLineText + afterLine;
+            let caretPosition = bounds.start + newLineText.length;
+            if (updatedValue.charAt(caretPosition) !== '\n') {
+                updatedValue = `${updatedValue.slice(0, caretPosition)}\n${updatedValue.slice(caretPosition)}`;
+            }
+            const newCaret = caretPosition + 1;
+            editor.value = updatedValue;
+            editor.setSelectionRange(newCaret, newCaret);
+            activeMarkdownStyles.delete(id);
+            if (headingStyleIds.has(id)) {
+                headingStyleIds.forEach(other => {
+                    if (other !== id) {
+                        activeMarkdownStyles.delete(other);
+                    }
+                });
+            }
+            updateMarkdownActiveStates();
+            state.lastEditorValue = editor.value;
+            updatePreview();
+            return;
+        }
+        const insertion = `\n${leading}${prefix}`;
+        editor.value = value.slice(0, start) + insertion + value.slice(end);
+        const newCaret = start + insertion.length;
+        editor.setSelectionRange(newCaret, newCaret);
+        state.lastEditorValue = editor.value;
+        updatePreview();
+        return;
+    }
 }
 
 
@@ -367,8 +451,24 @@ function applyBlockStyle(style) {
     const start = editor.selectionStart;
     const end = editor.selectionEnd;
     if (start === end) {
-    showNotification(t('select-text'), 'warning');
-        return { applied: false, active: false };
+        const before = editor.value.slice(0, start);
+        const after = editor.value.slice(end);
+        if (before.endsWith(prefix) && after.startsWith(suffix)) {
+            editor.value = before.slice(0, -prefix.length) + after.slice(suffix.length);
+            const caret = start - prefix.length;
+            editor.focus();
+            editor.setSelectionRange(caret, caret);
+        } else {
+            const insertion = `${prefix}${suffix}`;
+            editor.value = before + insertion + after;
+            const caret = before.length + prefix.length;
+            editor.focus();
+            editor.setSelectionRange(caret, caret);
+        }
+        state.lastEditorValue = editor.value;
+        updatePreview();
+        showNotification(t('style-applied'), 'success');
+        return { applied: true, active: null };
     }
     const selection = editor.value.slice(start, end);
     const isWrapped = selection.startsWith(prefix) && selection.endsWith(suffix);
@@ -399,12 +499,16 @@ function applyUnicodeStyle(name) {
     const end = editor.selectionEnd;
     if (start !== end) {
         const selection = editor.value.slice(start, end);
-        const { text: normalizedText, applied } = normalizeFontText(selection, data);
-        if (containsProtectedSequence(selection) && !applied) {
-            showNotification(t('protected-warning'), 'warning');
+        const transformed = transformUnicodeSelection(selection, data);
+        if (!transformed.changed) {
+            if (transformed.reason === 'protected') {
+                showNotification(t('protected-warning'), 'warning');
+            } else {
+                showNotification(t('style-applied'), 'success');
+            }
             return;
         }
-        const result = applied ? normalizedText : transformWithFont(selection, data);
+        const result = transformed.text;
         const before = editor.value.slice(0, start);
         const after = editor.value.slice(end);
         editor.value = before + result + after;
@@ -558,6 +662,64 @@ function wrapSegmentWithStyle(segment, prefix, suffix) {
         return segment;
     }
     return `${leading}${prefix}${core}${suffix}${trailing}`;
+}
+
+function splitProtectedSegments(text) {
+    const regex = new RegExp(protectedPattern.source, 'g');
+    const segments = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+            segments.push({ protected: false, value: text.slice(lastIndex, match.index) });
+        }
+        segments.push({ protected: true, value: match[0] });
+        lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+        segments.push({ protected: false, value: text.slice(lastIndex) });
+    }
+    return segments;
+}
+
+function transformUnicodeSelection(text, data) {
+    const segments = splitProtectedSegments(text);
+    const editable = segments.filter(segment => !segment.protected && segment.value);
+    if (!editable.length) {
+        return { text, changed: false, reason: 'protected' };
+    }
+    let allApplied = true;
+    editable.forEach(segment => {
+        const { text: normalized, applied } = normalizeFontText(segment.value, data);
+        const wasApplied = applied && normalized !== segment.value;
+        segment.normalized = wasApplied ? normalized : segment.value;
+        segment.wasApplied = wasApplied;
+        if (!wasApplied) {
+            allApplied = false;
+        }
+    });
+    if (allApplied) {
+        const reverted = segments.map(segment => (segment.protected ? segment.value : segment.normalized)).join('');
+        if (reverted === text) {
+            return { text, changed: false, reason: 'unchanged' };
+        }
+        return { text: reverted, changed: true, reason: null };
+    }
+    let changed = false;
+    const appliedText = segments.map(segment => {
+        if (segment.protected) {
+            return segment.value;
+        }
+        const transformed = transformWithFont(segment.value, data);
+        if (transformed !== segment.value) {
+            changed = true;
+        }
+        return transformed;
+    }).join('');
+    if (!changed) {
+        return { text, changed: false, reason: 'unchanged' };
+    }
+    return { text: appliedText, changed: true, reason: null };
 }
 
 function getLineBounds(text, index) {
