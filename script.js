@@ -9,7 +9,16 @@ const autoContinueExitOnEmpty = new Set(['list', 'quote', 'multiline-quote']);
 const DISCORD_LIMIT = 2000;
 const DISCORD_LIMIT_NITRO = 4000;
 
-
+const TS_STYLE_ORDER = ['R', 't', 'T', 'd', 'D', 'f', 'F'];
+const TS_STYLE_LABEL_KEYS = {
+    R: 'timestamp-style-R',
+    t: 'timestamp-style-t',
+    T: 'timestamp-style-T',
+    d: 'timestamp-style-d',
+    D: 'timestamp-style-D',
+    f: 'timestamp-style-f',
+    F: 'timestamp-style-F'
+};
 
 // Translation helper with fallback to English then key
 function t(key) {
@@ -36,7 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
         preview.addEventListener('click', handlePreviewClick);
     }
 
+    const langBtn = document.getElementById('langBtn');
+    const themeBtn = document.getElementById('themeBtn');
+    const copyBtn = document.querySelector('.copy-btn');
+    const resetBtn = document.querySelector('.reset-btn');
+    if (langBtn) langBtn.addEventListener('click', toggleLanguage);
+    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    if (copyBtn) copyBtn.addEventListener('click', copyMessage);
+    if (resetBtn) resetBtn.addEventListener('click', resetEditor);
+
     initEmojis();
+    initTimestampTool();
     updateTranslations();
     updatePreview();
     updateMessageStats();
@@ -1091,6 +1110,37 @@ function updateTranslations() {
 
     const footerText2 = document.getElementById('footerText2');
     if (footerText2) footerText2.textContent = t('footer-text2');
+
+    const timestampBlockTitle = document.getElementById('timestampBlockTitle');
+    if (timestampBlockTitle) timestampBlockTitle.textContent = t('timestamp-block-title');
+    const timestampIntro = document.getElementById('timestampIntro');
+    if (timestampIntro) timestampIntro.textContent = t('timestamp-intro');
+    const tsDateBtn = document.getElementById('tsDateBtn');
+    if (tsDateBtn) {
+        const cal = t('timestamp-aria-calendar');
+        tsDateBtn.setAttribute('aria-label', cal);
+        tsDateBtn.setAttribute('title', cal);
+    }
+    const tsTimeBtn = document.getElementById('tsTimeBtn');
+    if (tsTimeBtn) {
+        const clk = t('timestamp-aria-clock');
+        tsTimeBtn.setAttribute('aria-label', clk);
+        tsTimeBtn.setAttribute('title', clk);
+    }
+    const tsDateLabel = document.getElementById('tsDateLabel');
+    if (tsDateLabel) tsDateLabel.textContent = t('timestamp-date');
+    const tsTimeLabel = document.getElementById('tsTimeLabel');
+    if (tsTimeLabel) tsTimeLabel.textContent = t('timestamp-time');
+    const tsStyleLabel = document.getElementById('tsStyleLabel');
+    if (tsStyleLabel) tsStyleLabel.textContent = t('timestamp-type');
+    const tsPreviewLabel = document.getElementById('tsPreviewLabel');
+    if (tsPreviewLabel) tsPreviewLabel.textContent = t('timestamp-preview-label');
+    const tsCopyBtnEl = document.getElementById('tsCopyBtn');
+    if (tsCopyBtnEl) tsCopyBtnEl.textContent = t('timestamp-copy');
+    const tsResetBtn = document.getElementById('tsResetBtn');
+    if (tsResetBtn) tsResetBtn.textContent = t('timestamp-reset');
+    populateTimestampStyleOptions();
+    refreshTimestampUI();
 }
 
 function toggleLanguage() {
@@ -1098,17 +1148,214 @@ function toggleLanguage() {
     updateTranslations();
 }
 
-// Attach event listeners instead of relying on inline onclick attributes
-document.addEventListener('DOMContentLoaded', () => {
-    const langBtn = document.getElementById('langBtn');
-    const themeBtn = document.getElementById('themeBtn');
-    const copyBtn = document.querySelector('.copy-btn');
-    const resetBtn = document.querySelector('.reset-btn');
-    if (langBtn) langBtn.addEventListener('click', toggleLanguage);
-    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
-    if (copyBtn) copyBtn.addEventListener('click', copyMessage);
-    if (resetBtn) resetBtn.addEventListener('click', resetEditor);
-});
+function getTimestampLocale() {
+    return state.currentLang === 'fr' ? 'fr-FR' : 'en-US';
+}
+
+function padDateInput(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+function padTimeInput(d) {
+    const h = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${h}:${min}`;
+}
+
+function setTimestampInputsFromDate(d) {
+    const dateEl = document.getElementById('tsDate');
+    const timeEl = document.getElementById('tsTime');
+    if (dateEl) dateEl.value = padDateInput(d);
+    if (timeEl) timeEl.value = padTimeInput(d);
+}
+
+function resetTimestampToNow() {
+    setTimestampInputsFromDate(new Date());
+    refreshTimestampUI();
+}
+
+function readTimestampUnixSeconds() {
+    const dateEl = document.getElementById('tsDate');
+    const timeEl = document.getElementById('tsTime');
+    if (!dateEl || !timeEl || !dateEl.value || !timeEl.value) {
+        return null;
+    }
+    const d = new Date(`${dateEl.value}T${timeEl.value}:00`);
+    const sec = Math.floor(d.getTime() / 1000);
+    return Number.isFinite(sec) ? sec : null;
+}
+
+function formatTimestampPreview(unixSec, style) {
+    const loc = getTimestampLocale();
+    const date = new Date(unixSec * 1000);
+    if (style === 'R') {
+        const now = Math.floor(Date.now() / 1000);
+        let diff = unixSec - now;
+        const rtf = new Intl.RelativeTimeFormat(state.currentLang === 'fr' ? 'fr' : 'en', { numeric: 'auto' });
+        const ad = Math.abs(diff);
+        if (ad < 60) return rtf.format(diff, 'second');
+        const diffMin = Math.trunc(diff / 60);
+        if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
+        const diffHr = Math.trunc(diff / 3600);
+        if (Math.abs(diffHr) < 48) return rtf.format(diffHr, 'hour');
+        const diffDay = Math.trunc(diff / 86400);
+        if (Math.abs(diffDay) < 14) return rtf.format(diffDay, 'day');
+        const diffWeek = Math.trunc(diff / 604800);
+        if (Math.abs(diffWeek) < 8) return rtf.format(diffWeek, 'week');
+        const diffMonth = Math.trunc(diff / 2592000);
+        if (Math.abs(diffMonth) < 24) return rtf.format(diffMonth, 'month');
+        return rtf.format(Math.trunc(diff / 31536000), 'year');
+    }
+    if (style === 't') {
+        return new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit' }).format(date);
+    }
+    if (style === 'T') {
+        return new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(date);
+    }
+    if (style === 'd') {
+        return new Intl.DateTimeFormat(loc, { year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+    }
+    if (style === 'D') {
+        return new Intl.DateTimeFormat(loc, { dateStyle: 'long' }).format(date);
+    }
+    if (style === 'f') {
+        return new Intl.DateTimeFormat(loc, { dateStyle: 'long', timeStyle: 'short' }).format(date);
+    }
+    if (style === 'F') {
+        return new Intl.DateTimeFormat(loc, { dateStyle: 'full', timeStyle: 'short' }).format(date);
+    }
+    return String(unixSec);
+}
+
+function buildTimestampCode(unixSec, style) {
+    return `<t:${unixSec}:${style}>`;
+}
+
+function populateTimestampStyleOptions() {
+    const sel = document.getElementById('tsStyle');
+    if (!sel) {
+        return;
+    }
+    const current = sel.value && TS_STYLE_ORDER.includes(sel.value) ? sel.value : 'R';
+    sel.innerHTML = '';
+    TS_STYLE_ORDER.forEach(style => {
+        const opt = document.createElement('option');
+        opt.value = style;
+        opt.textContent = t(TS_STYLE_LABEL_KEYS[style]);
+        sel.appendChild(opt);
+    });
+    sel.value = TS_STYLE_ORDER.includes(current) ? current : 'R';
+}
+
+function refreshTimestampUI() {
+    const out = document.getElementById('tsOutput');
+    const prev = document.getElementById('tsPreview');
+    const styleEl = document.getElementById('tsStyle');
+    const unix = readTimestampUnixSeconds();
+    const style = styleEl && styleEl.value ? styleEl.value : 'R';
+    if (unix == null) {
+        if (out) out.value = '';
+        if (prev) prev.textContent = '—';
+        return;
+    }
+    if (out) out.value = buildTimestampCode(unix, style);
+    if (prev) prev.textContent = formatTimestampPreview(unix, style);
+}
+
+async function copyTimestampCode() {
+    const out = document.getElementById('tsOutput');
+    const text = out && out.value ? out.value.trim() : '';
+    if (!text) {
+        showNotification(t('copy-error'), 'error');
+        return;
+    }
+    const success = await copyToClipboard(text);
+    showNotification(success ? t('copied') : t('copy-error'), success ? 'success' : 'error');
+}
+
+function openNativePicker(input) {
+    if (!input || typeof input.showPicker !== 'function') {
+        input?.focus();
+        return;
+    }
+    input.showPicker().catch(() => input.focus());
+}
+
+function initTimestampTool() {
+    const dateEl = document.getElementById('tsDate');
+    const timeEl = document.getElementById('tsTime');
+    const styleEl = document.getElementById('tsStyle');
+    const copyEl = document.getElementById('tsCopyBtn');
+    const resetEl = document.getElementById('tsResetBtn');
+    if (!dateEl || !timeEl || !styleEl) {
+        return;
+    }
+    populateTimestampStyleOptions();
+    resetTimestampToNow();
+    const onChange = () => refreshTimestampUI();
+    dateEl.addEventListener('change', onChange);
+    dateEl.addEventListener('input', onChange);
+    timeEl.addEventListener('change', onChange);
+    timeEl.addEventListener('input', onChange);
+    styleEl.addEventListener('change', onChange);
+
+    const bindPickerOpener = (input, labelId) => {
+        const lbl = document.getElementById(labelId);
+        if (lbl) {
+            lbl.addEventListener('click', ev => {
+                if (ev.target === input) return;
+                ev.preventDefault();
+                openNativePicker(input);
+            });
+        }
+        const wrap = input.closest('.timestamp-tap');
+        if (wrap) {
+            wrap.addEventListener('click', ev => {
+                if (ev.target === input || input.contains(ev.target)) return;
+                if (ev.target.closest('label')) return;
+                if (ev.target.closest('.timestamp-icon-btn')) return;
+                openNativePicker(input);
+            });
+        }
+    };
+    bindPickerOpener(dateEl, 'tsDateLabel');
+    bindPickerOpener(timeEl, 'tsTimeLabel');
+
+    const dateIconBtn = document.getElementById('tsDateBtn');
+    const timeIconBtn = document.getElementById('tsTimeBtn');
+    if (dateIconBtn) {
+        dateIconBtn.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            openNativePicker(dateEl);
+        });
+    }
+    if (timeIconBtn) {
+        timeIconBtn.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            openNativePicker(timeEl);
+        });
+    }
+
+    if (copyEl) copyEl.addEventListener('click', copyTimestampCode);
+    if (resetEl) resetEl.addEventListener('click', resetTimestampToNow);
+    let raf = 0;
+    const tickRelative = () => {
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+            raf = 0;
+            const st = document.getElementById('tsStyle');
+            if (st && st.value === 'R') {
+                refreshTimestampUI();
+            }
+        });
+    };
+    setInterval(tickRelative, 15000);
+}
 
 function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

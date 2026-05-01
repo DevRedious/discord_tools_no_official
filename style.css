@@ -101,6 +101,7 @@ header p {
     font-size: 0.9em;
     font-weight: 600;
     transition: all 0.3s;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -133,6 +134,7 @@ header p {
     gap: 20px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
+    min-height: 0;
 }
 
 .column:hover {
@@ -146,6 +148,7 @@ header p {
 
 .column-editor {
     grid-area: editor;
+    overflow: visible;
 }
 
 .column-styles {
@@ -811,5 +814,302 @@ footer a:hover {
     font-size: 0.85rem;
     max-height: 260px;
     overflow: auto;
+}
+
+/* Discord dynamic timestamp */
+.timestamp-tool {
+    background: var(--bg-tertiary);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+body:not(.light) .timestamp-tool input[type="date"],
+body:not(.light) .timestamp-tool input[type="time"] {
+    color-scheme: dark;
+}
+
+body.light .timestamp-tool input[type="date"],
+body.light .timestamp-tool input[type="time"] {
+    color-scheme: light;
+}
+
+.timestamp-input-shell {
+    display: flex;
+    align-items: stretch;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-height: 48px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timestamp-input-shell:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 48, 48, 0.15);
+}
+
+.timestamp-input-in-shell {
+    flex: 1;
+    min-width: 0;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 12px 8px 12px 14px !important;
+    position: relative;
+}
+
+.timestamp-input-in-shell:focus {
+    outline: none;
+    box-shadow: none !important;
+}
+
+/* Une seule icône : masquer le sélecteur natif (Chromium / Safari / Edge) */
+.timestamp-input-shell input[type="date"]::-webkit-calendar-picker-indicator,
+.timestamp-input-shell input[type="time"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
+
+.timestamp-input-shell input[type="date"]::-webkit-clear-button,
+.timestamp-input-shell input[type="time"]::-webkit-clear-button {
+    display: none;
+}
+
+/* Firefox : icône calendrier native */
+.timestamp-input-shell input[type="date"]::-moz-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.timestamp-icon-btn {
+    flex-shrink: 0;
+    width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-left: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.timestamp-icon-btn:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.timestamp-svg {
+    display: block;
+    pointer-events: none;
+}
+
+.timestamp-intro {
+    font-size: 0.92em;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin: 0;
+}
+
+.timestamp-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.timestamp-field-wide {
+    grid-column: 1 / -1;
+}
+
+.timestamp-tap {
+    cursor: pointer;
+}
+
+.timestamp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.timestamp-field label,
+.timestamp-preview-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.timestamp-input,
+.timestamp-select {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1em;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timestamp-input:focus,
+.timestamp-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 48, 48, 0.15);
+}
+
+/* Menu déroulant du format d’horodatage (select natif : liste = OS, options partiellement stylables) */
+select.timestamp-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    min-height: 48px;
+    padding: 12px 44px 12px 14px;
+    cursor: pointer;
+    font-weight: 500;
+    line-height: 1.35;
+    accent-color: var(--accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23b0b0b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 18px;
+    background-color: var(--bg-secondary);
+}
+
+body.light select.timestamp-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%234c4c4c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+}
+
+select.timestamp-select::-ms-expand {
+    display: none;
+}
+
+select.timestamp-select:hover {
+    border-color: var(--text-secondary);
+    background-color: var(--bg-hover);
+}
+
+body:not(.light) select.timestamp-select {
+    color-scheme: dark;
+}
+
+body.light select.timestamp-select {
+    color-scheme: light;
+}
+
+select.timestamp-select option {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+}
+
+select.timestamp-select option:checked {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.timestamp-preview {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 1.05em;
+    min-height: 2.5em;
+    display: flex;
+    align-items: center;
+}
+
+.timestamp-code-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.timestamp-code-input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 14px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9em;
+}
+
+.timestamp-copy-btn {
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.timestamp-copy-btn:hover {
+    background: var(--accent-hover);
+}
+
+.timestamp-copy-btn:active {
+    transform: scale(0.98);
+}
+
+.timestamp-reset-full {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.timestamp-reset-full:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent);
+}
+
+@media (max-width: 520px) {
+    .timestamp-fields {
+        grid-template-columns: 1fr;
+    }
+
+    .timestamp-field-wide {
+        grid-column: auto;
+    }
+
+    .timestamp-code-row {
+        flex-direction: column;
+    }
+
+    .timestamp-copy-btn {
+        width: 100%;
+    }
 }
 

@@ -66,6 +66,44 @@
                 </div>
             </div>
 
+            <div class="timestamp-tool" id="timestampTool">
+                <div class="section-header" id="timestampBlockTitle"></div>
+                <p class="timestamp-intro" id="timestampIntro"></p>
+                <div class="timestamp-fields">
+                    <div class="timestamp-field timestamp-tap">
+                        <label for="tsDate" id="tsDateLabel"></label>
+                        <div class="timestamp-input-shell">
+                            <input type="date" id="tsDate" class="timestamp-input timestamp-input-in-shell" autocomplete="off">
+                            <button type="button" class="timestamp-icon-btn" id="tsDateBtn" aria-label="Ouvrir le calendrier" title="Ouvrir le calendrier">
+                                <svg class="timestamp-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="timestamp-field timestamp-tap">
+                        <label for="tsTime" id="tsTimeLabel"></label>
+                        <div class="timestamp-input-shell">
+                            <input type="time" id="tsTime" class="timestamp-input timestamp-input-in-shell" step="60" autocomplete="off">
+                            <button type="button" class="timestamp-icon-btn" id="tsTimeBtn" aria-label="Ouvrir le sélecteur d'heure" title="Ouvrir le sélecteur d'heure">
+                                <svg class="timestamp-svg" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 3"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="timestamp-field timestamp-field-wide">
+                        <label for="tsStyle" id="tsStyleLabel"></label>
+                        <select id="tsStyle" class="timestamp-input timestamp-select"></select>
+                    </div>
+                </div>
+                <div class="timestamp-field">
+                    <span class="timestamp-preview-label" id="tsPreviewLabel"></span>
+                    <div id="tsPreview" class="timestamp-preview" aria-live="polite"></div>
+                </div>
+                <div class="timestamp-code-row">
+                    <input type="text" id="tsOutput" class="timestamp-code-input" readonly>
+                    <button type="button" class="timestamp-copy-btn" id="tsCopyBtn"></button>
+                </div>
+                <button type="button" class="timestamp-reset-full" id="tsResetBtn"></button>
+            </div>
+
             <div class="editor-workspace">
                 <div class="section-header" id="textEditorTitle">Zone de Texte</div>
                 <textarea id="messageEditor" class="message-editor" placeholder="Tapez votre message ici..."></textarea>
