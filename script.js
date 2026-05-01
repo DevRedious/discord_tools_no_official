@@ -20,6 +20,10 @@ const TS_STYLE_LABEL_KEYS = {
     F: 'timestamp-style-F'
 };
 
+let timestampRelativeIntervalId = null;
+let timestampUiFlushRaf = 0;
+let timestampVisibilityListenerBound = false;
+
 // Translation helper with fallback to English then key
 function t(key) {
     const langPack = translations[state.currentLang] || {};
@@ -1295,12 +1299,20 @@ function initTimestampTool() {
     }
     populateTimestampStyleOptions();
     resetTimestampToNow();
-    const onChange = () => refreshTimestampUI();
-    dateEl.addEventListener('change', onChange);
-    dateEl.addEventListener('input', onChange);
-    timeEl.addEventListener('change', onChange);
-    timeEl.addEventListener('input', onChange);
-    styleEl.addEventListener('change', onChange);
+    const scheduleTimestampUiRefresh = () => {
+        if (timestampUiFlushRaf) {
+            cancelAnimationFrame(timestampUiFlushRaf);
+        }
+        timestampUiFlushRaf = requestAnimationFrame(() => {
+            timestampUiFlushRaf = 0;
+            refreshTimestampUI();
+        });
+    };
+    dateEl.addEventListener('change', scheduleTimestampUiRefresh);
+    dateEl.addEventListener('input', scheduleTimestampUiRefresh);
+    timeEl.addEventListener('change', scheduleTimestampUiRefresh);
+    timeEl.addEventListener('input', scheduleTimestampUiRefresh);
+    styleEl.addEventListener('change', scheduleTimestampUiRefresh);
 
     const bindPickerOpener = (input, labelId) => {
         const lbl = document.getElementById(labelId);
@@ -1343,18 +1355,42 @@ function initTimestampTool() {
 
     if (copyEl) copyEl.addEventListener('click', copyTimestampCode);
     if (resetEl) resetEl.addEventListener('click', resetTimestampToNow);
-    let raf = 0;
-    const tickRelative = () => {
-        if (raf) cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(() => {
-            raf = 0;
+
+    let relativeTickRaf = 0;
+    const tickRelativePreview = () => {
+        if (relativeTickRaf) cancelAnimationFrame(relativeTickRaf);
+        relativeTickRaf = requestAnimationFrame(() => {
+            relativeTickRaf = 0;
             const st = document.getElementById('tsStyle');
             if (st && st.value === 'R') {
                 refreshTimestampUI();
             }
         });
     };
-    setInterval(tickRelative, 15000);
+    const startRelativeTicker = () => {
+        if (timestampRelativeIntervalId) {
+            clearInterval(timestampRelativeIntervalId);
+        }
+        timestampRelativeIntervalId = setInterval(tickRelativePreview, 15000);
+    };
+    const stopRelativeTicker = () => {
+        if (timestampRelativeIntervalId) {
+            clearInterval(timestampRelativeIntervalId);
+            timestampRelativeIntervalId = null;
+        }
+    };
+    if (!timestampVisibilityListenerBound) {
+        timestampVisibilityListenerBound = true;
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopRelativeTicker();
+            } else {
+                tickRelativePreview();
+                startRelativeTicker();
+            }
+        });
+    }
+    startRelativeTicker();
 }
 
 function escapeRegex(str) {
