@@ -31,6 +31,26 @@ function t(key) {
     return (langPack[key] ?? enPack[key] ?? key);
 }
 
+// Shared theme/language preferences (persisted across Markify pages)
+const PREF_THEME = 'markify-theme';
+const PREF_LANG = 'markify-lang';
+
+function savePref(key, value) {
+    try { localStorage.setItem(key, value); } catch (_) { /* storage unavailable */ }
+}
+
+function loadPreferences() {
+    let savedTheme = null;
+    let savedLang = null;
+    try {
+        savedTheme = localStorage.getItem(PREF_THEME);
+        savedLang = localStorage.getItem(PREF_LANG);
+    } catch (_) { /* storage unavailable */ }
+    if (savedTheme === 'light' || savedTheme === 'dark') state.currentTheme = savedTheme;
+    if (savedLang === 'fr' || savedLang === 'en') state.currentLang = savedLang;
+    document.body.classList.toggle('light', state.currentTheme === 'light');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const emojiSearch = document.getElementById('emojiSearch');
     if (emojiSearch) {
@@ -58,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (copyBtn) copyBtn.addEventListener('click', copyMessage);
     if (resetBtn) resetBtn.addEventListener('click', resetEditor);
 
+    loadPreferences();
     initEmojis();
     initTimestampTool();
     updateTranslations();
@@ -75,6 +96,7 @@ function toggleTheme() {
     if (themeBtn) {
         themeBtn.textContent = state.currentTheme === 'light' ? '☀️' : '🌙';
     }
+    savePref(PREF_THEME, state.currentTheme);
 }
 
 async function copyMessage() {
@@ -1149,6 +1171,7 @@ function updateTranslations() {
 
 function toggleLanguage() {
     state.currentLang = state.currentLang === 'fr' ? 'en' : 'fr';
+    savePref(PREF_LANG, state.currentLang);
     updateTranslations();
 }
 

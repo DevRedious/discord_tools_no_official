@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markify - Générateur d'embed Discord</title>
+    <meta name="description" content="Construisez, prévisualisez et exportez des embeds Discord (JSON webhook/bot) avec Markify.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+</head>
+<body>
+    <script>try{if(localStorage.getItem('markify-theme')==='light')document.body.classList.add('light');}catch(e){}</script>
+    <header>
+        <h1>MARKIFY</h1>
+        <p id="subtitle">Générateur d'embed Discord</p>
+        <div class="controls">
+            <a class="control-btn" id="backLink" href="index.html">← Éditeur</a>
+            <button class="control-btn" id="langBtn">FR</button>
+            <button class="control-btn" id="themeBtn">🌙</button>
+        </div>
+    </header>
+
+    <div class="embed-container">
+        <!-- BUILDER COLUMN -->
+        <section class="column">
+            <h2 class="column-title"><span id="builderTitle">Constructeur</span></h2>
+
+            <div class="mode-toggle" role="tablist">
+                <button type="button" class="mode-btn active" id="modeEmbedBtn" role="tab" aria-selected="true">Embed classique</button>
+                <button type="button" class="mode-btn" id="modeV2Btn" role="tab" aria-selected="false">Components V2</button>
+            </div>
+
+            <div id="embedPane">
+            <div class="embed-builder">
+                <!-- AUTHOR -->
+                <div class="embed-group">
+                    <div class="style-group-header" id="authorLegend">Auteur</div>
+                    <div class="embed-field">
+                        <label for="authorName" id="authorNameLabel">Nom de l'auteur</label>
+                        <input type="text" id="authorName" maxlength="256" autocomplete="off">
+                    </div>
+                    <div class="embed-field">
+                        <label for="authorUrl" id="authorUrlLabel">Lien de l'auteur</label>
+                        <input type="text" id="authorUrl" autocomplete="off" placeholder="https://...">
+                    </div>
+                    <div class="embed-field">
+                        <label for="authorIcon" id="authorIconLabel">URL de l'icône de l'auteur</label>
+                        <input type="text" id="authorIcon" autocomplete="off" placeholder="https://...">
+                    </div>
+                </div>
+
+                <!-- BODY -->
+                <div class="embed-group">
+                    <div class="style-group-header" id="bodyLegend">Contenu</div>
+                    <div class="embed-field">
+                        <label for="embedTitle" id="titleLabel">Titre</label>
+                        <input type="text" id="embedTitle" maxlength="256" autocomplete="off">
+                    </div>
+                    <div class="embed-field">
+                        <label for="titleUrl" id="titleUrlLabel">Lien du titre</label>
+                        <input type="text" id="titleUrl" autocomplete="off" placeholder="https://...">
+                    </div>
+                    <div class="embed-field">
+                        <label for="embedDescription" id="descriptionLabel">Description</label>
+                        <textarea id="embedDescription" maxlength="4096"></textarea>
+                    </div>
+                    <div class="embed-field color-field">
+                        <label for="embedColor" id="colorLabel">Couleur</label>
+                        <input type="color" id="embedColor" value="#5865f2">
+                        <input type="text" id="embedColorHex" class="color-hex" value="#5865F2" maxlength="7" autocomplete="off" spellcheck="false">
+                    </div>
+                </div>
+
+                <!-- FIELDS -->
+                <div class="embed-group">
+                    <div class="style-group-header" id="fieldsLegend">Champs</div>
+                    <div id="fieldsList" class="embed-fields-list"></div>
+                    <button type="button" class="reset-btn embed-add-btn" id="addFieldBtn">+ <span id="addFieldText">Ajouter un champ</span></button>
+                </div>
+
+                <!-- IMAGES -->
+                <div class="embed-group">
+                    <div class="style-group-header" id="mediaLegend">Images</div>
+                    <div class="embed-field">
+                        <label for="thumbnailUrl" id="thumbnailLabel">URL de la miniature</label>
+                        <input type="text" id="thumbnailUrl" autocomplete="off" placeholder="https://...">
+                    </div>
+                    <div class="embed-field">
+                        <label for="imageUrl" id="imageLabel">URL de l'image</label>
+                        <input type="text" id="imageUrl" autocomplete="off" placeholder="https://...">
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="embed-group">
+                    <div class="style-group-header" id="footerLegend">Pied de page</div>
+                    <div class="embed-field">
+                        <label for="footerText" id="footerTextLabel">Texte du pied de page</label>
+                        <input type="text" id="footerText" maxlength="2048" autocomplete="off">
+                    </div>
+                    <div class="embed-field">
+                        <label for="footerIcon" id="footerIconLabel">URL de l'icône du pied</label>
+                        <input type="text" id="footerIcon" autocomplete="off" placeholder="https://...">
+                    </div>
+                    <label class="embed-checkbox">
+                        <input type="checkbox" id="timestampToggle">
+                        <span id="timestampLabel">Inclure l'horodatage actuel</span>
+                    </label>
+                </div>
+            </div>
+            </div>
+
+            <div id="v2Pane" hidden>
+                <p class="info-note" id="v2Intro">Components V2 : construisez le message par blocs. Le JSON utilise le flag 32768 et remplace complètement content/embeds.</p>
+                <div class="v2-toolbar" id="v2Toolbar"></div>
+                <div class="v2-blocks" id="v2Root"></div>
+            </div>
+        </section>
+
+        <!-- PREVIEW & OUTPUT COLUMN -->
+        <section class="column">
+            <h2 class="column-title"><span id="previewColTitle">Aperçu</span></h2>
+
+            <div class="discord-preview">
+                <div class="discord-message">
+                    <div class="discord-avatar"></div>
+                    <div class="discord-message-body">
+                        <div class="discord-message-header">
+                            <span class="discord-username" id="botName">Markify</span>
+                            <span class="discord-bot-tag">BOT</span>
+                            <span class="discord-message-time" id="botTime">aujourd'hui</span>
+                        </div>
+                        <div id="embedPreview" class="discord-embed-wrapper"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header" id="jsonTitle">JSON (webhook / bot)</div>
+            <p class="info-note" id="jsonInfo">Collez ce JSON dans le corps d'une requête webhook Discord ou dans votre bot.</p>
+            <pre id="embedOutput" class="embed-output"></pre>
+
+            <div class="button-group">
+                <button type="button" class="copy-btn" id="copyJsonBtn"><span id="copyJsonText">Copier le JSON</span></button>
+                <button type="button" class="reset-btn" id="resetBtn"><span id="resetText">Réinitialiser</span></button>
+            </div>
+
+            <div class="section-header" id="deliveryTitle">Envoi & sauvegarde</div>
+
+            <div class="embed-field">
+                <label for="webhookUrl" id="webhookLabel">URL du webhook Discord</label>
+                <input type="text" id="webhookUrl" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/...">
+            </div>
+            <p class="info-note" id="webhookInfo">L'URL du webhook n'est jamais sauvegardée ni exportée : elle reste dans ce navigateur.</p>
+            <div class="button-group">
+                <button type="button" class="copy-btn" id="sendWebhookBtn"><span id="sendText">Envoyer via webhook</span></button>
+            </div>
+            <p class="embed-status" id="webhookStatus" role="status" aria-live="polite"></p>
+
+            <div class="button-group">
+                <button type="button" class="reset-btn" id="exportBtn"><span id="exportText">Exporter (.json)</span></button>
+                <button type="button" class="reset-btn" id="importBtn"><span id="importText">Importer (.json)</span></button>
+            </div>
+            <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </section>
+    </div>
+
+    <footer>
+        <p><span id="footerCredit">Site créé par</span> <a href="https://discord.gg/6b4NYRNsRC" target="_blank" rel="noopener">REDIOUS</a> <span id="footerCredit2">pour aider les gestionnaires de serveur Discord</span></p>
+    </footer>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="embed.js" type="module"></script>
+</body>
+</html>
