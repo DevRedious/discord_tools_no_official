@@ -50,6 +50,122 @@ export function setDraft(data) {
     rerender();
 }
 
+// Import a Discord components array (reverse of buildPayload) into the model.
+export function fromDiscord(components) {
+    const list = Array.isArray(components) ? components : [];
+    blocks = list.map(discordToBlock).map(sanitizeBlock).filter(Boolean);
+    rerender();
+}
+
+// Validation against Discord limits; returns a list of human-readable warnings.
+export function getWarnings(t) {
+    const w = [];
+    const payload = buildPayload();
+    const count = countComponents(payload.components);
+    const text = countText(payload.components);
+    if (count > 40) w.push(t('v2-warn-count').replace('{n}', count));
+    if (text > 4000) w.push(t('v2-warn-text').replace('{n}', text));
+    let missingAccessory = false;
+    walkModel(blocks, b => {
+        if (b.type === 'section' && (!b.accessory || b.accessory.kind === 'none')) missingAccessory = true;
+    });
+    if (missingAccessory) w.push(t('v2-warn-section'));
+    return w;
+}
+
+function countComponents(arr) {
+    let n = 0;
+    (arr || []).forEach(c => {
+        n++;
+        if (Array.isArray(c.components)) n += countComponents(c.components);
+        if (c.accessory && c.accessory.type) n += 1;
+    });
+    return n;
+}
+
+function countText(arr) {
+    let n = 0;
+    (arr || []).forEach(c => {
+        if (c.type === 10 && c.content) n += c.content.length;
+        if (Array.isArray(c.components)) n += countText(c.components);
+    });
+    return n;
+}
+
+function walkModel(list, fn) {
+    (list || []).forEach(b => {
+        fn(b);
+        if (b.type === 'container') walkModel(b.children, fn);
+    });
+}
+
+/* ---------------- Discord JSON -> Model ---------------- */
+function discordToBlock(c) {
+    if (!c || typeof c !== 'object') return null;
+    if (c.type === 17) {
+        return {
+            type: 'container',
+            accent: c.accent_color != null ? intToHex(c.accent_color) : '',
+            spoiler: !!c.spoiler,
+            children: (c.components || []).map(discordToChild).filter(Boolean)
+        };
+    }
+    return discordToChild(c);
+}
+
+function discordToChild(c) {
+    if (!c || typeof c !== 'object') return null;
+    switch (c.type) {
+        case 10: return { type: 'text', content: str(c.content) };
+        case 14: return { type: 'separator', divider: c.divider !== false, spacing: c.spacing === 2 ? 2 : 1 };
+        case 13: return { type: 'file', url: str(c.file && c.file.url), spoiler: !!c.spoiler };
+        case 12: return { type: 'gallery', items: (c.items || []).map(i => ({ url: str(i.media && i.media.url), description: str(i.description), spoiler: !!i.spoiler })) };
+        case 9: return { type: 'section', texts: (c.components || []).map(tc => str(tc.content)), accessory: discordToAccessory(c.accessory) };
+        case 1: {
+            const comps = c.components || [];
+            const first = comps[0];
+            if (first && first.type !== 2) {
+                return { type: 'actionrow', kind: 'select', buttons: [makeButton()], select: discordToSelect(first) };
+            }
+            return { type: 'actionrow', kind: 'buttons', buttons: comps.filter(x => x.type === 2).map(discordToButton), select: makeSelect() };
+        }
+        default: return null;
+    }
+}
+
+function discordToAccessory(a) {
+    if (!a || typeof a !== 'object') return { kind: 'none' };
+    if (a.type === 11) return { kind: 'thumbnail', url: str(a.media && a.media.url), description: str(a.description), spoiler: !!a.spoiler };
+    if (a.type === 2) return Object.assign({ kind: 'button' }, discordToButton(a));
+    return { kind: 'none' };
+}
+
+function discordToButton(b) {
+    return {
+        style: [1, 2, 3, 4, 5].includes(b.style) ? b.style : 5,
+        label: str(b.label), url: str(b.url), custom_id: str(b.custom_id),
+        emoji: emojiToStr(b.emoji), disabled: !!b.disabled
+    };
+}
+
+function discordToSelect(s) {
+    return {
+        selectType: [3, 5, 6, 7, 8].includes(s.type) ? s.type : 3,
+        custom_id: str(s.custom_id), placeholder: str(s.placeholder),
+        min: numOr(s.min_values, 1), max: numOr(s.max_values, 1), disabled: !!s.disabled,
+        options: (s.options || []).map(o => ({
+            label: str(o.label), value: str(o.value), description: str(o.description),
+            emoji: emojiToStr(o.emoji), default: !!o.default
+        }))
+    };
+}
+
+function emojiToStr(e) {
+    if (!e || typeof e !== 'object') return '';
+    if (e.id) return e.animated ? `<a:${str(e.name)}:${e.id}>` : `${str(e.name)}:${e.id}`;
+    return str(e.name);
+}
+
 export function renderPreview(target) {
     const t = hooks.t;
     target.innerHTML = '';
@@ -487,11 +603,7 @@ function buildSelect(sel, body) {
 
 function buildContainer(block, body) {
     const t = hooks.t;
-    const meta = document.createElement('div');
-    meta.className = 'v2-subrow';
-    const accentWrap = field(t('v2-accent'), textInput(block.accent, v => block.accent = v, '#5865F2'));
-    meta.appendChild(accentWrap);
-    body.appendChild(meta);
+    body.appendChild(colorField(t('v2-accent'), block.accent, v => block.accent = v));
     body.appendChild(checkbox(t('v2-spoiler'), block.spoiler, v => block.spoiler = v));
 
     const nested = document.createElement('div');
@@ -655,6 +767,36 @@ function selectEl(options, value, onchange) {
     });
     sel.addEventListener('change', () => onchange(sel.value));
     return sel;
+}
+
+function colorField(labelText, value, oninput) {
+    const wrap = document.createElement('div');
+    wrap.className = 'embed-field';
+    const label = document.createElement('label');
+    label.textContent = labelText;
+    wrap.appendChild(label);
+    const row = document.createElement('div');
+    row.className = 'v2-color-row';
+    const color = document.createElement('input');
+    color.type = 'color';
+    color.value = /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#5865F2';
+    const hex = document.createElement('input');
+    hex.type = 'text';
+    hex.className = 'v2-color-hex';
+    hex.value = value || '';
+    hex.placeholder = '#5865F2';
+    hex.maxLength = 7;
+    color.addEventListener('input', () => { hex.value = color.value.toUpperCase(); oninput(hex.value); hooks.onChange(); });
+    hex.addEventListener('input', () => {
+        const v = hex.value.trim();
+        if (/^#?[0-9a-fA-F]{6}$/.test(v)) color.value = v.startsWith('#') ? v : '#' + v;
+        oninput(hex.value);
+        hooks.onChange();
+    });
+    row.appendChild(color);
+    row.appendChild(hex);
+    wrap.appendChild(row);
+    return wrap;
 }
 
 function checkbox(labelText, checked, onchange) {

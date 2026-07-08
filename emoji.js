@@ -1448,4 +1448,4 @@ function handleEmojiSelection(emojiChar) {
     insertEmoji(emojiChar);
 }
 
-export { initEmojis, displayEmojis, searchEmojis, showCategory, handleEmojiSelection, insertEmoji };
+export { initEmojis, displayEmojis, searchEmojis, showCategory, handleEmojiSelection, insertEmoji, emojiData };

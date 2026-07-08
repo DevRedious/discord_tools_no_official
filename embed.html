@@ -31,6 +31,7 @@
             </div>
 
             <div id="embedPane">
+            <div class="embed-tabs" id="embedTabs"></div>
             <div class="embed-builder">
                 <!-- AUTHOR -->
                 <div class="embed-group">
@@ -62,7 +63,14 @@
                     </div>
                     <div class="embed-field">
                         <label for="embedDescription" id="descriptionLabel">Description</label>
-                        <textarea id="embedDescription" maxlength="4096"></textarea>
+                        <div class="field-with-emoji">
+                            <textarea id="embedDescription" maxlength="4096"></textarea>
+                            <button type="button" class="emoji-trigger" id="emojiBtn" title="Emojis" aria-label="Emojis">😀</button>
+                            <div class="emoji-popover" id="emojiPopover" hidden>
+                                <input type="text" id="emojiPopoverSearch" class="emoji-popover-search" autocomplete="off" placeholder="Rechercher…">
+                                <div class="emoji-popover-grid" id="emojiPopoverGrid"></div>
+                            </div>
+                        </div>
                     </div>
                     <div class="embed-field color-field">
                         <label for="embedColor" id="colorLabel">Couleur</label>
@@ -138,6 +146,7 @@
             <div class="section-header" id="jsonTitle">JSON (webhook / bot)</div>
             <p class="info-note" id="jsonInfo">Collez ce JSON dans le corps d'une requête webhook Discord ou dans votre bot.</p>
             <pre id="embedOutput" class="embed-output"></pre>
+            <div id="validationPanel" class="validation-panel" hidden></div>
 
             <div class="button-group">
                 <button type="button" class="copy-btn" id="copyJsonBtn"><span id="copyJsonText">Copier le JSON</span></button>
@@ -151,6 +160,16 @@
                 <input type="text" id="webhookUrl" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/...">
             </div>
             <p class="info-note" id="webhookInfo">L'URL du webhook n'est jamais sauvegardée ni exportée : elle reste dans ce navigateur.</p>
+            <div class="webhook-overrides">
+                <div class="embed-field">
+                    <label for="webhookUsername" id="webhookUsernameLabel">Nom d'utilisateur (optionnel)</label>
+                    <input type="text" id="webhookUsername" maxlength="80" autocomplete="off">
+                </div>
+                <div class="embed-field">
+                    <label for="webhookAvatar" id="webhookAvatarLabel">URL de l'avatar (optionnel)</label>
+                    <input type="text" id="webhookAvatar" autocomplete="off" placeholder="https://...">
+                </div>
+            </div>
             <div class="button-group">
                 <button type="button" class="copy-btn" id="sendWebhookBtn"><span id="sendText">Envoyer via webhook</span></button>
             </div>
@@ -161,6 +180,16 @@
                 <button type="button" class="reset-btn" id="importBtn"><span id="importText">Importer (.json)</span></button>
             </div>
             <input type="file" id="importFile" accept="application/json,.json" hidden>
+
+            <div class="section-header" id="importJsonTitle">Importer un JSON Discord</div>
+            <p class="info-note" id="importJsonInfo">Collez le JSON d'un message Discord (embeds ou Components V2) pour remplir le formulaire.</p>
+            <div class="embed-field">
+                <textarea id="pasteJson" class="paste-json" spellcheck="false" placeholder='{ "embeds": [ … ] }'></textarea>
+            </div>
+            <div class="button-group">
+                <button type="button" class="reset-btn" id="loadPasteBtn"><span id="loadPasteText">Charger le JSON collé</span></button>
+            </div>
+            <p class="embed-status" id="pasteStatus" role="status" aria-live="polite"></p>
         </section>
     </div>
 
