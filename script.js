@@ -1110,6 +1110,9 @@ function updateTranslations() {
     const resetBtnText = document.getElementById('resetBtnText');
     if (resetBtnText) resetBtnText.textContent = t('reset-btn');
 
+    const embedLinkText = document.getElementById('embedLinkText');
+    if (embedLinkText) embedLinkText.textContent = t('open-embed');
+
     const previewTitle = document.getElementById('previewTitle');
     if (previewTitle) previewTitle.textContent = t('preview-title');
 

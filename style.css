@@ -478,6 +478,51 @@ header p {
     transform: translateY(-2px);
 }
 
+/* Embed generator CTA */
+.embed-link-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 15px 18px;
+    border-radius: 14px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    font-size: 1em;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.embed-link-btn:hover,
+.embed-link-btn:focus-visible {
+    background: var(--accent);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(255, 48, 48, 0.25);
+}
+
+.embed-link-btn:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.embed-link-icon {
+    flex-shrink: 0;
+}
+
+.embed-link-arrow {
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+
+.embed-link-btn:hover .embed-link-arrow,
+.embed-link-btn:focus-visible .embed-link-arrow {
+    transform: translateX(4px);
+}
+
 .control-btn:focus-visible,
 .tab:focus-visible,
 .style-btn:focus-visible,
